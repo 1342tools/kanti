@@ -1,0 +1,45 @@
+name: Publish Electron App
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish'
+        required: true
+        default: '0.2.0'
+
+jobs:
+  publish:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    
+    steps:
+    - name: Check out Git repository
+      uses: actions/checkout@v4
+    
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+    
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Prepare
+      run: npm run svelte-build
+
+    - name: Publish Electron App
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # If you're publishing to an app store, add additional tokens here
+        # APPLE_ID: ${{ secrets.APPLE_ID }}
+        # APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      run: npm run publish
+      # This assumes you have a publish script in package.json
