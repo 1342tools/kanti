@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, protocol, net, Menu, dialog } from 'electr
 import path from 'path';
 import url from 'url';
 import { stat } from 'node:fs/promises';
-import * as proxyModule from './proxy';
+import { GoBackendManager } from './go-backend';
 import * as projectModule from './project';
 import * as ffufModule from './ffuf';
 import { promisify } from 'node:util';
@@ -50,6 +50,9 @@ async function decompressResponse(
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 import electronSquirrelStartup from 'electron-squirrel-startup';
 if(electronSquirrelStartup) app.quit();
+
+// Initialize Go backend manager
+const goBackend = new GoBackendManager();
 
 // Tab window references to avoid garbage collection
 let tabWindows: Record<string, BrowserWindow> = {};
@@ -282,16 +285,30 @@ const createTabWindow = async (tabName: string) => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-  // Initialize all modules
-  proxyModule.init();
-  proxyModule.registerIpcHandlers();
+app.on('ready', async () => {
+  // Initialize Go backend
+  try {
+    await goBackend.start();
+    console.log('Go backend started successfully');
+  } catch (error) {
+    console.error('Failed to start Go backend:', error);
+    dialog.showErrorBox(
+      'Backend Error',
+      `Failed to start KProxy backend: ${(error as Error).message}`
+    );
+    app.quit();
+    return;
+  }
   
+  // Initialize other modules
   projectModule.init();
   projectModule.registerIpcHandlers();
   
   ffufModule.init();
   ffufModule.registerIpcHandlers();
+  
+  // Register proxy IPC handlers that communicate with Go backend
+  registerProxyIpcHandlers();
   
   // Start directly with main window
   createWindow();
@@ -319,6 +336,14 @@ app.on('activate', () => {
 
 // Save project before quitting
 app.on('before-quit', async (event) => {
+  // Stop Go backend
+  try {
+    await goBackend.stop();
+    console.log('Go backend stopped');
+  } catch (error) {
+    console.error('Error stopping Go backend:', error);
+  }
+  
   // Check if there's a current project with a saved path
   const currentProject = projectModule.getCurrentProject();
   const projectPath = projectModule.getProjectPath();
@@ -380,6 +405,236 @@ ipcMain.on('setTitleBarColors', (event, bgColor, iconColor) => {
 		height: 40
 	});
 });
+
+/**
+ * Register IPC handlers for proxy operations (communicates with Go backend)
+ */
+function registerProxyIpcHandlers() {
+  // Get proxy status
+  ipcMain.handle('proxy:getStatus', async () => {
+    try {
+      return await goBackend.getStatus();
+    } catch (error) {
+      console.error('Error getting proxy status:', error);
+      return { isRunning: false, port: 8080, certificatePath: '' };
+    }
+  });
+
+  // Get proxy settings/config
+  ipcMain.handle('proxy:getSettings', async () => {
+    try {
+      return await goBackend.getConfig();
+    } catch (error) {
+      console.error('Error getting proxy settings:', error);
+      return { port: 8080, autoStart: false, customHeaders: {}, saveOnlyInScope: false };
+    }
+  });
+
+  // Start proxy
+  ipcMain.handle('proxy:start', async (event, settings) => {
+    try {
+      const status = await goBackend.startProxy(settings.port || 8080);
+      
+      // Broadcast status to all windows
+      const allWindows = BrowserWindow.getAllWindows();
+      allWindows.forEach(window => {
+        if (!window.isDestroyed()) {
+          window.webContents.send('proxy-status', status);
+        }
+      });
+      
+      return status;
+    } catch (error) {
+      console.error('Error starting proxy:', error);
+      throw error;
+    }
+  });
+
+  // Stop proxy
+  ipcMain.handle('proxy:stop', async () => {
+    try {
+      const status = await goBackend.stopProxy();
+      
+      // Broadcast status to all windows
+      const allWindows = BrowserWindow.getAllWindows();
+      allWindows.forEach(window => {
+        if (!window.isDestroyed()) {
+          window.webContents.send('proxy-status', status);
+        }
+      });
+      
+      return status;
+    } catch (error) {
+      console.error('Error stopping proxy:', error);
+      throw error;
+    }
+  });
+
+  // Update settings
+  ipcMain.handle('proxy:updateSettings', async (event, settings) => {
+    try {
+      // Map settings to Go backend config
+      const config = await goBackend.getConfig();
+      const updatedConfig = {
+        ...config,
+        port: settings.port ?? config.port,
+        customHeaders: settings.customHeaders ?? config.customHeaders,
+        saveOnlyInScope: settings.saveOnlyInScope ?? config.saveOnlyInScope,
+      };
+      
+      await goBackend.updateConfig(updatedConfig);
+      return updatedConfig;
+    } catch (error) {
+      console.error('Error updating proxy settings:', error);
+      throw error;
+    }
+  });
+
+  // Export certificate
+  ipcMain.handle('proxy:exportCertificate', async () => {
+    try {
+      const status = await goBackend.getStatus();
+      return {
+        success: true,
+        message: `Certificate available at ${status.certificatePath}`,
+        path: status.certificatePath
+      };
+    } catch (error) {
+      console.error('Error exporting certificate:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  // Export CA certificate to user-specified location
+  ipcMain.handle('proxy:exportCaCertificate', async () => {
+    try {
+      const status = await goBackend.getStatus();
+      const certPath = status.certificatePath;
+      
+      if (!certPath) {
+        throw new Error('CA certificate not initialized');
+      }
+      
+      // Ask user where to save certificate
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: 'Export CA Certificate',
+        defaultPath: 'kproxy-ca.crt',
+        filters: [
+          { name: 'Certificates', extensions: ['crt', 'pem'] }
+        ]
+      });
+      
+      if (canceled || !filePath) {
+        return { success: false, canceled: true };
+      }
+      
+      // Copy certificate to selected location
+      const fs = await import('fs');
+      fs.copyFileSync(certPath, filePath);
+      
+      return { 
+        success: true, 
+        certPath: filePath,
+        message: 'Certificate exported successfully. Install it in your browser\'s certificate store.'
+      };
+    } catch (error) {
+      console.error('Error exporting certificate:', error);
+      return { 
+        success: false, 
+        error: (error as Error).message
+      };
+    }
+  });
+
+  // Get certificate instructions
+  ipcMain.handle('proxy:getCertificateInstructions', () => {
+    return {
+      windows: 'Open certmgr.msc > Right-click "Trusted Root Certification Authorities" > All Tasks > Import > Browse to the exported certificate file > Complete the wizard.',
+      macos: 'Double-click the certificate file > Add to Keychain > In Keychain Access, double-click the imported certificate > Expand "Trust" > Set "When using this certificate" to "Always Trust".',
+      firefox: 'Open Firefox > Settings > Privacy & Security > Certificates > View Certificates > Import > Browse to the exported certificate file > Trust this CA to identify websites > OK.',
+      chrome: 'Chrome and Edge use the system\'s certificate store on Windows and macOS. For Linux, go to Chrome Settings > Privacy and security > Security > Manage certificates > Authorities > Import.'
+    };
+  });
+
+  // Get custom headers
+  ipcMain.handle('proxy:getCustomHeaders', async () => {
+    try {
+      const config = await goBackend.getConfig();
+      return config.customHeaders || {};
+    } catch (error) {
+      console.error('Error getting custom headers:', error);
+      return {};
+    }
+  });
+
+  // Update custom headers
+  ipcMain.handle('proxy:updateCustomHeaders', async (event, headers) => {
+    try {
+      const config = await goBackend.getConfig();
+      const updatedConfig = {
+        ...config,
+        customHeaders: headers
+      };
+      await goBackend.updateConfig(updatedConfig);
+      return headers;
+    } catch (error) {
+      console.error('Error updating custom headers:', error);
+      throw error;
+    }
+  });
+
+  // Get all requests
+  ipcMain.handle('proxy:getRequests', async () => {
+    try {
+      return await goBackend.getRequests();
+    } catch (error) {
+      console.error('Error getting requests:', error);
+      return [];
+    }
+  });
+
+  // Clear requests
+  ipcMain.handle('proxy:clearRequests', async () => {
+    try {
+      await goBackend.clearRequests();
+      return { success: true };
+    } catch (error) {
+      console.error('Error clearing requests:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  // Get scope settings
+  ipcMain.handle('proxy:getScopeSettings', async () => {
+    try {
+      const config = await goBackend.getConfig();
+      return {
+        inScope: config.inScope || [],
+        outOfScope: config.outOfScope || []
+      };
+    } catch (error) {
+      console.error('Error getting scope settings:', error);
+      return { inScope: [], outOfScope: [] };
+    }
+  });
+
+  // Save scope settings
+  ipcMain.handle('proxy:saveScopeSettings', async (event, settings) => {
+    try {
+      const config = await goBackend.getConfig();
+      const updatedConfig = {
+        ...config,
+        inScope: settings.inScope,
+        outOfScope: settings.outOfScope
+      };
+      await goBackend.updateConfig(updatedConfig);
+      return { success: true };
+    } catch (error) {
+      console.error('Error saving scope settings:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+}
 
 /**
  * Register IPC handlers for tab management and project operations

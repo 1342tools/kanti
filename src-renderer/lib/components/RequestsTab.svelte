@@ -463,34 +463,44 @@
         proxyStatus = { ...proxyStatus, ...status };
       });
 
-      // Listen for new requests
-      window.electronAPI.receive('proxy-request', (requestData: CapturedRequest) => {
-        console.log('New request:', requestData);
-        // Add to requests list (ensure no duplicates)
-        const existingIndex = requests.findIndex(r => r.id === requestData.id);
-        if (existingIndex === -1) {
-          requests = [requestData, ...requests];
-          // Save to project (just pass the array of requests)
-          projectState.addRequests([requestData]);
+      // Listen for new request batches (more efficient than individual requests)
+      window.electronAPI.receive('proxy-request-batch', (requestBatch: CapturedRequest[]) => {
+        console.log(`New request batch: ${requestBatch.length} requests`);
+        // Filter out duplicates and add new requests
+        const newRequests = requestBatch.filter(
+          requestData => !requests.some(r => r.id === requestData.id)
+        );
+        if (newRequests.length > 0) {
+          requests = [...newRequests, ...requests];
+          // Save to project
+          projectState.addRequests(newRequests);
         }
       });
       
-      // Listen for response updates
-      window.electronAPI.receive('proxy-response', (responseData: CapturedRequest) => {
-        console.log('Response received:', responseData);
-        // Update the request in our list
-        const index = requests.findIndex(r => r.id === responseData.id);
-        if (index !== -1) {
-          requests[index] = responseData;
-          requests = [...requests]; // Trigger reactivity
-          
-          // Update selected request if it's the one that was updated
-          if (selectedRequest && selectedRequest.id === responseData.id) {
-            selectedRequest = responseData;
+      // Listen for response batch updates (more efficient than individual responses)
+      window.electronAPI.receive('proxy-response-batch', (responseBatch: CapturedRequest[]) => {
+        console.log(`Response batch: ${responseBatch.length} responses`);
+        // Update requests in bulk for better performance
+        const updatedRequests = [...requests];
+        let hasUpdates = false;
+        
+        responseBatch.forEach(responseData => {
+          const index = updatedRequests.findIndex(r => r.id === responseData.id);
+          if (index !== -1) {
+            updatedRequests[index] = responseData;
+            hasUpdates = true;
+            
+            // Update selected request if it matches
+            if (selectedRequest && selectedRequest.id === responseData.id) {
+              selectedRequest = responseData;
+            }
           }
-
-          // Update in project store (just pass the array of requests)
-          projectState.addRequests([responseData]);
+        });
+        
+        if (hasUpdates) {
+          requests = updatedRequests;
+          // Update in project store
+          projectState.addRequests(responseBatch);
         }
       });
       

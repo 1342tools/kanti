@@ -1,0 +1,352 @@
+import { spawn, ChildProcess } from 'child_process';
+import { app, BrowserWindow } from 'electron';
+import path from 'path';
+import fs from 'fs';
+
+export interface GoProxyStatus {
+  isRunning: boolean;
+  port: number;
+  certificatePath: string;
+}
+
+export interface GoProxyConfig {
+  port: number;
+  sslInterception: boolean;
+  customHeaders: Record<string, string>;
+  saveOnlyInScope: boolean;
+  inScope: string[];
+  outOfScope: string[];
+}
+
+export class GoBackendManager {
+  private process: ChildProcess | null = null;
+  private baseUrl = 'http://localhost:9090';
+  private ipcPort = 9090;
+  private isReady = false;
+  private eventSource: any = null;
+
+  async start(): Promise<void> {
+    if (this.process) {
+      console.log('Go backend already running');
+      return;
+    }
+
+    const binary = this.getBinaryPath();
+    const dataDir = path.join(app.getPath('userData'), 'kproxy-go');
+
+    // Ensure binary exists
+    if (!fs.existsSync(binary)) {
+      throw new Error(`Go backend binary not found at: ${binary}`);
+    }
+
+    console.log(`Starting Go backend from: ${binary}`);
+    console.log(`Data directory: ${dataDir}`);
+
+    this.process = spawn(binary, [
+      '-data', dataDir,
+      '-ipc-port', this.ipcPort.toString(),
+    ], {
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    if (this.process.stdout) {
+      this.process.stdout.on('data', (data) => {
+        console.log(`[Go Backend] ${data.toString().trim()}`);
+      });
+    }
+
+    if (this.process.stderr) {
+      this.process.stderr.on('data', (data) => {
+        console.error(`[Go Backend Error] ${data.toString().trim()}`);
+      });
+    }
+
+    this.process.on('error', (error) => {
+      console.error('Go backend process error:', error);
+      this.process = null;
+      this.isReady = false;
+    });
+
+    this.process.on('exit', (code, signal) => {
+      console.log(`Go backend exited with code ${code} and signal ${signal}`);
+      this.process = null;
+      this.isReady = false;
+    });
+
+    // Wait for backend to be ready
+    await this.waitForReady();
+    this.isReady = true;
+    console.log('Go backend ready');
+    
+    // Connect to event stream
+    this.connectEventStream();
+  }
+
+  async stop(): Promise<void> {
+    // Disconnect event stream first
+    this.disconnectEventStream();
+    
+    if (this.process) {
+      console.log('Stopping Go backend...');
+      this.process.kill('SIGTERM');
+      
+      // Wait a bit for graceful shutdown
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Force kill if still running
+      if (this.process) {
+        this.process.kill('SIGKILL');
+      }
+      
+      this.process = null;
+      this.isReady = false;
+    }
+  }
+
+  isRunning(): boolean {
+    return this.process !== null && this.isReady;
+  }
+
+  // Proxy control methods
+  async startProxy(port: number): Promise<GoProxyStatus> {
+    const response = await this.request('POST', '/api/proxy/start', { port });
+    return response.data;
+  }
+
+  async stopProxy(): Promise<GoProxyStatus> {
+    const response = await this.request('POST', '/api/proxy/stop');
+    return response.data;
+  }
+
+  async getStatus(): Promise<GoProxyStatus> {
+    const response = await this.request('GET', '/api/proxy/status');
+    return response.data;
+  }
+
+  async getConfig(): Promise<GoProxyConfig> {
+    const response = await this.request('GET', '/api/proxy/config');
+    return response.data;
+  }
+
+  async updateConfig(config: Partial<GoProxyConfig>): Promise<GoProxyConfig> {
+    const response = await this.request('POST', '/api/proxy/config', config);
+    return response.data;
+  }
+
+  async getRequests(): Promise<any[]> {
+    const response = await this.request('GET', '/api/proxy/requests');
+    return response.data;
+  }
+
+  async clearRequests(): Promise<void> {
+    await this.request('POST', '/api/proxy/clear');
+  }
+
+  // Helper methods
+  private getBinaryPath(): string {
+    const platform = process.platform;
+    let binaryName = 'kproxy-backend';
+    
+    if (platform === 'win32') {
+      binaryName += '.exe';
+    }
+
+    // Check if running from development
+    if (import.meta.env.DEV) {
+      // Development: look in src-go/bin/
+      const devPath = path.join(process.cwd(), 'src-go', 'bin', binaryName);
+      if (fs.existsSync(devPath)) {
+        return devPath;
+      }
+    }
+
+    // Production: look in app resources
+    const resourcesPath = path.join(process.resourcesPath, 'bin', binaryName);
+    if (fs.existsSync(resourcesPath)) {
+      return resourcesPath;
+    }
+
+    // Fallback: look relative to app path
+    return path.join(app.getAppPath(), 'resources', 'bin', binaryName);
+  }
+
+  private async request(method: string, path: string, body?: any): Promise<any> {
+    if (!this.isReady) {
+      throw new Error('Go backend not ready');
+    }
+
+    const url = `${this.baseUrl}${path}`;
+    
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: body ? { 'Content-Type': 'application/json' } : {},
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Request failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error(`Request to ${url} failed:`, error);
+      throw error;
+    }
+  }
+
+  private async waitForReady(): Promise<void> {
+    const maxAttempts = 100; // 10 seconds
+    const delayMs = 100;
+
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        const response = await fetch(`${this.baseUrl}/api/proxy/status`);
+        if (response.ok) {
+          return;
+        }
+      } catch (e) {
+        // Backend not ready yet
+      }
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+
+    throw new Error('Go backend failed to start within timeout');
+  }
+
+  // Get event stream URL for SSE
+  getEventStreamUrl(): string {
+    return `${this.baseUrl}/api/events`;
+  }
+
+  // Connect to the Go backend's SSE event stream
+  private connectEventStream(): void {
+    try {
+      console.log('Connecting to Go backend event stream...');
+      
+      const eventStreamUrl = this.getEventStreamUrl();
+      console.log(`Event stream URL: ${eventStreamUrl}`);
+      
+      // Use fetch with streaming for SSE
+      fetch(eventStreamUrl).then(response => {
+        if (!response.ok) {
+          console.error('Failed to connect to event stream:', response.statusText);
+          return;
+        }
+        
+        console.log('✓ Connected to Go backend event stream successfully');
+        
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        
+        if (!reader) {
+          console.error('No reader available for event stream');
+          return;
+        }
+        
+        // Store reader reference for cleanup
+        this.eventSource = { reader, active: true };
+        
+        // Process stream
+        const processStream = async () => {
+          let buffer = ''; // Buffer to accumulate incomplete chunks
+          
+          try {
+            while (this.eventSource?.active) {
+              const { done, value } = await reader.read();
+              
+              if (done) {
+                console.log('Event stream ended');
+                break;
+              }
+              
+              // Decode the chunk and add to buffer
+              buffer += decoder.decode(value, { stream: true });
+              
+              // SSE format: "data: <json>\n\n"
+              // Split by double newline to get complete events
+              const events = buffer.split('\n\n');
+              
+              // Keep the last incomplete event in the buffer
+              buffer = events.pop() || '';
+              
+              // Process complete events
+              for (const eventText of events) {
+                if (!eventText.trim()) continue;
+                
+                const lines = eventText.split('\n');
+                for (const line of lines) {
+                  if (line.startsWith('data: ')) {
+                    const jsonData = line.substring(6); // Remove "data: " prefix
+                    
+                    try {
+                      const event = JSON.parse(jsonData);
+                      this.handleEvent(event);
+                    } catch (e) {
+                      console.error('Failed to parse event data:', e);
+                      console.error('Problematic data:', jsonData.substring(0, 200));
+                    }
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            if (this.eventSource?.active) {
+              console.error('Error reading event stream:', error);
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        };
+        
+        processStream();
+      }).catch(error => {
+        console.error('Failed to connect to event stream:', error);
+      });
+      
+    } catch (error) {
+      console.error('Error setting up event stream:', error);
+    }
+  }
+
+  // Disconnect from event stream
+  private disconnectEventStream(): void {
+    if (this.eventSource) {
+      console.log('Disconnecting from event stream...');
+      this.eventSource.active = false;
+      this.eventSource = null;
+    }
+  }
+
+  // Handle events from Go backend and forward to renderer windows
+  private handleEvent(event: any): void {
+    // Use lowercase property names to match Go's JSON tags
+    if (!event.type || !event.data) {
+      console.warn('Received malformed event:', event);
+      return;
+    }
+    
+    console.log(`Received event from Go backend: ${event.type}, data items: ${Array.isArray(event.data) ? event.data.length : 'N/A'}`);
+    
+    // Get all browser windows
+    const allWindows = BrowserWindow.getAllWindows();
+    
+    if (allWindows.length === 0) {
+      console.warn('No browser windows available to forward event to');
+      return;
+    }
+    
+    // Forward event to all windows
+    let successCount = 0;
+    allWindows.forEach(window => {
+      if (!window.isDestroyed()) {
+        window.webContents.send(event.type, event.data);
+        successCount++;
+      }
+    });
+    
+    console.log(`Forwarded event ${event.type} to ${successCount}/${allWindows.length} windows`);
+  }
+}
