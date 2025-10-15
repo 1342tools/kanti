@@ -1,4 +1,4 @@
-# KProxy
+# Kanti (formerly Kproxy)
 ![image](https://github.com/user-attachments/assets/022d9a59-1636-48ef-bc3e-a7596a8ddde8)
 
 A web application testing tool built for capturing and modifying http/https requests.
@@ -40,7 +40,7 @@ npm run package
 
 ## Quick Start Guide
 
-1. Launch KProxy and create a new project(or open without one)
+1. Launch Kanti and create a new project(or open without one)
 2. Start the proxy in Settings > Proxy Settings
 3. Configure your browser to use KProxy's proxy (default: 127.0.0.1:8080)
 4. Browse your target application to populate requests in the application
