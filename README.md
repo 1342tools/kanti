@@ -42,7 +42,7 @@ npm run package
 
 1. Launch Kanti and create a new project(or open without one)
 2. Start the proxy in Settings > Proxy Settings
-3. Configure your browser to use KProxy's proxy (default: 127.0.0.1:8080)
+3. Configure your browser to use Kanti's proxy (default: 127.0.0.1:8080)
 4. Browse your target application to populate requests in the application
 
 ## Contributing/Security
