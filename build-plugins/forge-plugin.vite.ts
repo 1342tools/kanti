@@ -4,7 +4,6 @@ import { PRESET_TIMER } from 'listr2';
 import * as vite from 'vite';
 import type { RollupWatcher } from 'rollup';
 import path from 'path';
-import { rebuild } from '@electron/rebuild';
 import { readdir, readFile, writeFile, rm, cp } from 'node:fs/promises';
 import { spawn, SpawnOptionsWithoutStdio } from "child_process";
 
@@ -56,7 +55,7 @@ function objectKeepOnly(obj: { [key: string]: any }, keys: string[]): { [key: st
 
 async function viteRun(args: string[], options?: SpawnOptionsWithoutStdio) {
 	const vitePath = path.join(process.cwd(), './node_modules/.bin/vite');
-	const viteProcess = spawn(vitePath, args, options);
+	const viteProcess = spawn(vitePath, args, { ...options, stdio: 'inherit' });
 
 	await new Promise<void>(resolve => {
 		viteProcess.on('close', resolve);
@@ -73,21 +72,9 @@ async function deleteFolderContents_exclude(folderPath: string, exclude: string[
 }
 
 async function packageAfterCopy(forgeConfig: ResolvedForgeConfig, config: Config, buildPath: string, electronVersion: string, platform: string, arch: string) {
-	await rm(path.join(buildPath, './.vite'), { force: true, recursive: true });
-
-	await rebuild({
-		...forgeConfig.rebuildConfig,
-		buildPath, electronVersion, arch,
-	});
-
-	await Promise.all(
-		[...config.builds, ...config.renderers].map(info => viteRun([
-			'build',
-			'-c',
-			path.join(buildPath, info.configFile),
-		], { cwd: buildPath, shell: true })),
-	)
-
+	// Note: Vite builds are done BEFORE packaging in the prePackage hook
+	// This hook just cleans up the packaged directory
+	
 	await deleteFolderContents_exclude(buildPath, ['package.json', '.vite']);
 
 	const packagePath = path.join(buildPath, 'package.json');
@@ -171,6 +158,15 @@ export class ForgePlugin_Vite extends PluginBase<Config> {
 	}
 
 	getHooks = (): ForgeMultiHookMap => ({
+		prePackage: async () => {
+			// Build all configs in the main project directory (with node_modules available)
+			await Promise.all(
+				[...this.config.builds, ...this.config.renderers].map(async (info) => {
+					await viteRun(['build', '-c', info.configFile], { shell: true });
+				})
+			);
+		},
+
 		packageAfterCopy: async (forgeConfig, buildPath, electronVersion, platform, arch) =>
 			packageAfterCopy(forgeConfig, this.config, buildPath, electronVersion, platform, arch),
 

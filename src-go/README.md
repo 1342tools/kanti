@@ -1,6 +1,6 @@
-# KProxy Go Backend
+# Kanti Go Backend
 
-This is a high-performance Go implementation of the KProxy backend, replacing the TypeScript/Node.js implementation with a more efficient solution using the `goproxy` library.
+This is a high-performance Go implementation of the Kanti backend, replacing the TypeScript/Node.js implementation with a more efficient solution using the `goproxy` library.
 
 ## Architecture
 
@@ -101,33 +101,33 @@ This is a high-performance Go implementation of the KProxy backend, replacing th
 cd src-go
 
 # Build for current platform
-go build -o bin/kproxy-backend ./cmd/kproxy-backend
+go build -o bin/kanti-backend ./cmd/kanti-backend
 
 # Build for specific platforms
 # Linux
-GOOS=linux GOARCH=amd64 go build -o bin/kproxy-backend-linux-amd64 ./cmd/kproxy-backend
+GOOS=linux GOARCH=amd64 go build -o bin/kanti-backend-linux-amd64 ./cmd/kanti-backend
 
 # Windows
-GOOS=windows GOARCH=amd64 go build -o bin/kproxy-backend-windows-amd64.exe ./cmd/kproxy-backend
+GOOS=windows GOARCH=amd64 go build -o bin/kanti-backend-windows-amd64.exe ./cmd/kanti-backend
 
 # macOS
-GOOS=darwin GOARCH=amd64 go build -o bin/kproxy-backend-darwin-amd64 ./cmd/kproxy-backend
-GOOS=darwin GOARCH=arm64 go build -o bin/kproxy-backend-darwin-arm64 ./cmd/kproxy-backend
+GOOS=darwin GOARCH=amd64 go build -o bin/kanti-backend-darwin-amd64 ./cmd/kanti-backend
+GOOS=darwin GOARCH=arm64 go build -o bin/kanti-backend-darwin-arm64 ./cmd/kanti-backend
 ```
 
 ## Running
 
 ```bash
 # Run with defaults
-./bin/kproxy-backend
+./bin/kanti-backend
 
 # Run with custom options
-./bin/kproxy-backend -data ~/.kproxy -ipc-port 9090 -proxy-port 8080
+./bin/kanti-backend -data ~/.kanti -ipc-port 9090 -proxy-port 8080
 ```
 
 ### Command-line Options
 
-- `-data` - Data directory for certificates and cache (default: `~/.kproxy`)
+- `-data` - Data directory for certificates and cache (default: `~/.kanti`)
 - `-ipc-port` - IPC server port (default: `9090`)
 - `-proxy-port` - Default proxy port (default: `8080`)
 
@@ -137,7 +137,7 @@ GOOS=darwin GOARCH=arm64 go build -o bin/kproxy-backend-darwin-arm64 ./cmd/kprox
 
 1. Start the backend:
    ```bash
-   ./bin/kproxy-backend
+   ./bin/kanti-backend
    ```
 
 2. Test the IPC API:
@@ -163,7 +163,7 @@ GOOS=darwin GOARCH=arm64 go build -o bin/kproxy-backend-darwin-arm64 ./cmd/kprox
 3. Test event stream:
    ```bash
    # In one terminal
-   ./bin/kproxy-backend
+   ./bin/kanti-backend
 
    # In another terminal
    curl -N http://localhost:9090/api/events
@@ -230,11 +230,11 @@ class GoBackendManager {
       app.getAppPath(),
       'resources',
       'bin',
-      `kproxy-backend${process.platform === 'win32' ? '.exe' : ''}`
+      `kanti-backend${process.platform === 'win32' ? '.exe' : ''}`
     );
     
     this.process = spawn(binaryPath, [
-      '-data', path.join(app.getPath('userData'), 'kproxy-go'),
+      '-data', path.join(app.getPath('userData'), 'kanti-go'),
       '-ipc-port', this.ipcPort.toString(),
     ]);
     

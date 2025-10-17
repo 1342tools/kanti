@@ -5,13 +5,17 @@
 
 	let { children } = $props();
 
+	// Update title bar colors based on theme
 	$effect(() => {
-		window.setTitleBarColors('#212121', '#fff');
+		const isDark = preferredTheme.theme === 'dark';
+		const bgColor = isDark ? '#212121' : '#f0f0f0';
+		const textColor = isDark ? '#ffffff' : '#1a1a1a';
+		window.setTitleBarColors(bgColor, textColor);
 	});
 </script>
 
 <div id='titlebar' class='shrink-0 flex'>
-	<div class='px-4 select-none grow text-xs flex items-center' style='-webkit-app-region: drag;'>Kproxy</div>
+	<div class='px-4 select-none grow text-xs flex items-center' style='-webkit-app-region: drag;'>Kanti</div>
 	{#if import.meta.env.DEV}
 		<Devtools/>
 	{/if}

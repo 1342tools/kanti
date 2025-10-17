@@ -3,6 +3,7 @@
   import { page } from '$app/stores';
   import { projectState } from '$lib/stores/project';
   import { scopeStore } from '$lib/stores/scope';
+  import { visualSettings } from '$lib/stores/settings';
   import RequestsTab from '$lib/components/RequestsTab.svelte';
   import RepeaterTab from '$lib/components/RepeaterTab2.svelte';
   import SettingsTab from '$lib/components/SettingsTab.svelte';
@@ -10,6 +11,7 @@
   import FuzzTab from '$lib/components/FuzzTab.svelte';
   import ChatTab from '$lib/components/ChatTab.svelte';
   import SitemapTab from '$lib/components/SitemapTab.svelte';
+  import '$lib/styles/context-menu.css';
   
   // Check if we should display the startup dialog
   let showStartupDialog = false;
@@ -17,13 +19,136 @@
   // State for sidebar visibility
   let sidebarVisible = true;
   
+  // State for tabs visibility based on visual settings
+  let hideTopTabs = $visualSettings.hideTopTabs;
+  
+  // Subscribe to visual settings changes
+  $: hideTopTabs = $visualSettings.hideTopTabs;
+  
   // Track the active sidebar item
   let activeSidebarItem = 'Requests';
+  
+  // Tabs array for reordering
+  let tabs = ['Requests', 'Repeater', 'Fuzzer', 'Chat', 'Decode', 'Sitemap'];
+  let draggedTab: string | null = null;
+  let draggedOverTab: string | null = null;
+  
+  // Tab scrolling state
+  let tabsContainer: HTMLElement;
+  let showLeftScroll = false;
+  let showRightScroll = false;
   
   // Function to toggle sidebar visibility
   function toggleSidebar() {
     sidebarVisible = !sidebarVisible;
     // The CSS handles most of the toggle behavior with the class:collapsed binding
+  }
+  
+  // Drag and drop handlers for tab reordering
+  function handleDragStart(event: DragEvent, tabName: string) {
+    draggedTab = tabName;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/html', tabName);
+    }
+    // Add dragging class to the element
+    (event.target as HTMLElement).classList.add('dragging');
+  }
+  
+  function handleDragOver(event: DragEvent, tabName: string) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    draggedOverTab = tabName;
+  }
+  
+  function handleDragEnter(event: DragEvent, tabName: string) {
+    event.preventDefault();
+    if (draggedTab && draggedTab !== tabName) {
+      (event.target as HTMLElement).classList.add('drag-over');
+    }
+  }
+  
+  function handleDragLeave(event: DragEvent) {
+    (event.target as HTMLElement).classList.remove('drag-over');
+  }
+  
+  function handleDrop(event: DragEvent, tabName: string) {
+    event.preventDefault();
+    (event.target as HTMLElement).classList.remove('drag-over');
+    
+    if (!draggedTab || draggedTab === tabName) return;
+    
+    // Find the indices
+    const draggedIndex = tabs.indexOf(draggedTab);
+    const targetIndex = tabs.indexOf(tabName);
+    
+    if (draggedIndex === -1 || targetIndex === -1) return;
+    
+    // Reorder the tabs array
+    const newTabs = [...tabs];
+    newTabs.splice(draggedIndex, 1);
+    newTabs.splice(targetIndex, 0, draggedTab);
+    tabs = newTabs;
+    
+    // Save the order to localStorage
+    saveTabsOrder();
+  }
+  
+  function handleDragEnd(event: DragEvent) {
+    (event.target as HTMLElement).classList.remove('dragging');
+    draggedTab = null;
+    draggedOverTab = null;
+    
+    // Remove drag-over class from all tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.classList.remove('drag-over');
+    });
+  }
+  
+  // Save tabs order to localStorage
+  function saveTabsOrder() {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('tabsOrder', JSON.stringify(tabs));
+    }
+  }
+  
+  // Load tabs order from localStorage
+  function loadTabsOrder() {
+    if (typeof localStorage !== 'undefined') {
+      const savedOrder = localStorage.getItem('tabsOrder');
+      if (savedOrder) {
+        try {
+          tabs = JSON.parse(savedOrder);
+        } catch (e) {
+          console.error('Failed to parse saved tabs order:', e);
+        }
+      }
+    }
+  }
+  
+  // Check if tabs are overflowing and update scroll button visibility
+  function checkTabsOverflow() {
+    if (!tabsContainer) return;
+    
+    const { scrollLeft, scrollWidth, clientWidth } = tabsContainer;
+    showLeftScroll = scrollLeft > 0;
+    showRightScroll = scrollLeft + clientWidth < scrollWidth - 1;
+  }
+  
+  // Scroll tabs left
+  function scrollTabsLeft() {
+    if (!tabsContainer) return;
+    tabsContainer.scrollBy({ left: -200, behavior: 'smooth' });
+    setTimeout(checkTabsOverflow, 100);
+  }
+  
+  // Scroll tabs right
+  function scrollTabsRight() {
+    if (!tabsContainer) return;
+    tabsContainer.scrollBy({ left: 200, behavior: 'smooth' });
+    setTimeout(checkTabsOverflow, 100);
   }
 
   // Function to show the selected interface and hide others
@@ -36,7 +161,7 @@
     const chatInterface = document.getElementById('chat-interface') as HTMLElement;
     const fuzzerInterface = document.getElementById('fuzzer-interface') as HTMLElement;
     const sitemapInterface = document.getElementById('sitemap-interface') as HTMLElement;
-    const tabsBar = document.querySelector('.tabs') as HTMLElement;
+    const tabsBar = document.querySelector('.tabs-wrapper') as HTMLElement;
     
     if (!requestsInterface || !repeaterInterface || !decodeEncodeInterface || !settingsInterface || !sitemapInterface || !fuzzerInterface || !tabsBar) return;
     
@@ -49,11 +174,11 @@
     fuzzerInterface.style.display = 'none';
     sitemapInterface.style.display = 'none';
     
-    // Show/hide tabs based on the selected interface
-    if (interfaceName === 'Settings') {
-      tabsBar.style.display = 'none';
+    // Show/hide tabs based on the selected interface and visual settings
+    if (interfaceName === 'Settings' || hideTopTabs) {
+      if (tabsBar) tabsBar.style.display = 'none';
     } else {
-      tabsBar.style.display = 'flex';
+      if (tabsBar) tabsBar.style.display = 'flex';
     }
     
     // Show the selected interface
@@ -104,31 +229,20 @@
     // Create a context menu element
     const contextMenu = document.createElement('div');
     contextMenu.classList.add('context-menu');
-    contextMenu.style.position = 'fixed';
-    contextMenu.style.zIndex = '1000';
-    contextMenu.style.backgroundColor = '#2c2c2c';
-    contextMenu.style.border = '1px solid #444';
-    contextMenu.style.borderRadius = '8px';
-    contextMenu.style.padding = '5px 0';
-    contextMenu.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
     contextMenu.style.left = `${event.clientX}px`;
     contextMenu.style.top = `${event.clientY}px`;
     
     // Create the "Open in New Window" option
     const openInNewWindowOption = document.createElement('div');
+    openInNewWindowOption.classList.add('context-menu-item');
     openInNewWindowOption.textContent = 'Open in New Window';
-    openInNewWindowOption.style.padding = '8px 12px';
-    openInNewWindowOption.style.cursor = 'pointer';
-    openInNewWindowOption.style.color = '#fff';
-    openInNewWindowOption.style.fontSize = '14px';
     
-    // Add hover effect
-    openInNewWindowOption.addEventListener('mouseover', () => {
-      openInNewWindowOption.style.backgroundColor = '#3d3d3d';
-    });
-    
-    openInNewWindowOption.addEventListener('mouseout', () => {
-      openInNewWindowOption.style.backgroundColor = 'transparent';
+    // Add mouseleave handler to close menu when cursor leaves
+    contextMenu.addEventListener('mouseleave', () => {
+      if (document.body.contains(contextMenu)) {
+        document.body.removeChild(contextMenu);
+      }
+      document.removeEventListener('click', handleClickOutside);
     });
     
     // Add click handler to open in new window
@@ -224,6 +338,15 @@
 
   // Initialize the UI after component is mounted
   onMount(() => {
+    // Load saved tabs order
+    loadTabsOrder();
+    
+    // Apply initial tab visibility based on saved settings
+    const tabsBar = document.querySelector('.tabs-wrapper') as HTMLElement;
+    if (tabsBar && hideTopTabs) {
+      tabsBar.style.display = 'none';
+    }
+    
     // Check URL parameters to see if we're in startup mode
     if ($page.url.searchParams.get('startup') === 'true') {
       console.log('Startup mode detected, showing startup dialog');
@@ -231,7 +354,7 @@
     } else {
       // If not in startup mode, try to get the current project
       if (window.electronAPI) {
-        window.electronAPI.project.getCurrent().then(project => {
+        window.electronAPI.project.getCurrent().then((project: any) => {
           if (project) {
             projectState.initialize(project);
             console.log('Loaded current project:', project);
@@ -247,7 +370,7 @@
             // No active project, load scope settings from backend
             initializeScopeSettings();
           }
-        }).catch(err => {
+        }).catch((err: any) => {
           console.error('Error getting current project:', err);
           // Still try to initialize scope settings
           initializeScopeSettings();
@@ -297,9 +420,19 @@
       });
     });
     
+    // Set up tabs overflow detection
+    if (tabsContainer) {
+      checkTabsOverflow();
+      tabsContainer.addEventListener('scroll', checkTabsOverflow);
+      window.addEventListener('resize', checkTabsOverflow);
+    }
+    
     // Return cleanup function
     return () => {
-      // Clean up any event listeners if needed
+      if (tabsContainer) {
+        tabsContainer.removeEventListener('scroll', checkTabsOverflow);
+      }
+      window.removeEventListener('resize', checkTabsOverflow);
     };
   });
   
@@ -318,59 +451,196 @@
     </div>
     <div class="sidebar-content" class:hidden={!sidebarVisible}>
       <div class="sidebar-section">
-        <div class="sidebar-item" class:active={activeSidebarItem === 'Settings'}>Settings</div>
+        <div class="sidebar-item" class:active={activeSidebarItem === 'Settings'}>
+          <span class="label">Settings</span>
+        </div>
       </div>
       <div class="sidebar-section">
-        <div class="sidebar-item" class:active={activeSidebarItem === 'Requests'}>Requests</div>
-        <div class="sidebar-item" class:active={activeSidebarItem === 'Repeater'}>Repeater</div>
-        <div class="sidebar-item" class:active={activeSidebarItem === 'Fuzzer'}>Fuzzer</div>
-        <div class="sidebar-item" class:active={activeSidebarItem === 'Chat'}>Chat</div>
-        <div class="sidebar-item" class:active={activeSidebarItem === 'Decode'}>Decode</div>
-        <div class="sidebar-item" class:active={activeSidebarItem === 'Sitemap'}>Sitemap</div>
+        <div class="sidebar-item" class:active={activeSidebarItem === 'Requests'}>
+          <span class="label">Requests</span>
+        </div>
+        <div class="sidebar-item" class:active={activeSidebarItem === 'Repeater'}>
+          <span class="label">Repeater</span>
+        </div>
+        <div class="sidebar-item" class:active={activeSidebarItem === 'Fuzzer'}>
+          <span class="label">Fuzzer</span>
+        </div>
+        <div class="sidebar-item" class:active={activeSidebarItem === 'Chat'}>
+          <span class="label">Chat</span>
+        </div>
+        <div class="sidebar-item" class:active={activeSidebarItem === 'Decode'}>
+          <span class="label">Decode</span>
+        </div>
+        <div class="sidebar-item" class:active={activeSidebarItem === 'Sitemap'}>
+          <span class="label">Sitemap</span>
+        </div>
       </div>
     </div>
+    
+    <!-- Icons view when collapsed -->
+    {#if !sidebarVisible}
+      <div class="sidebar-icons">
+        <div class="icon-item" class:active={activeSidebarItem === 'Settings'} 
+             on:click={() => { 
+               showInterface('Settings'); 
+               document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+             }}
+             on:contextmenu={(e) => handleContextMenu(e, 'Settings')}>
+          <span class="icon-only" title="Settings"><i class="fi fi-rr-settings"></i></span>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="icon-item" class:active={activeSidebarItem === 'Requests'}
+             on:click={() => {
+               const tabs = document.querySelectorAll('.tab');
+               tabs.forEach(tab => {
+                 if (tab.textContent === 'Requests') {
+                   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                   tab.classList.add('active');
+                   showInterface('Requests');
+                 }
+               });
+             }}
+             on:contextmenu={(e) => handleContextMenu(e, 'Requests')}>
+          <span class="icon-only" title="Requests"><i class="fi fi-rr-rectangle-list"></i></span>
+        </div>
+        <div class="icon-item" class:active={activeSidebarItem === 'Repeater'}
+             on:click={() => {
+               const tabs = document.querySelectorAll('.tab');
+               tabs.forEach(tab => {
+                 if (tab.textContent === 'Repeater') {
+                   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                   tab.classList.add('active');
+                   showInterface('Repeater');
+                 }
+               });
+             }}
+             on:contextmenu={(e) => handleContextMenu(e, 'Repeater')}>
+          <span class="icon-only" title="Repeater"><i class="fi fi-sr-arrows-retweet"></i></span>
+        </div>
+        <div class="icon-item" class:active={activeSidebarItem === 'Fuzzer'}
+             on:click={() => {
+               const tabs = document.querySelectorAll('.tab');
+               tabs.forEach(tab => {
+                 if (tab.textContent === 'Fuzzer') {
+                   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                   tab.classList.add('active');
+                   showInterface('Fuzzer');
+                 }
+               });
+             }}
+             on:contextmenu={(e) => handleContextMenu(e, 'Fuzzer')}>
+          <span class="icon-only" title="Fuzzer"><i class="fi fi-rr-paper-plane"></i></span>
+        </div>
+        <div class="icon-item" class:active={activeSidebarItem === 'Chat'}
+             on:click={() => {
+               const tabs = document.querySelectorAll('.tab');
+               tabs.forEach(tab => {
+                 if (tab.textContent === 'Chat') {
+                   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                   tab.classList.add('active');
+                   showInterface('Chat');
+                 }
+               });
+             }}
+             on:contextmenu={(e) => handleContextMenu(e, 'Chat')}>
+          <span class="icon-only" title="Chat"><i class="fi fi-rr-messages"></i></span>
+        </div>
+        <div class="icon-item" class:active={activeSidebarItem === 'Decode'}
+             on:click={() => {
+               const tabs = document.querySelectorAll('.tab');
+               tabs.forEach(tab => {
+                 if (tab.textContent === 'Decode') {
+                   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                   tab.classList.add('active');
+                   showInterface('Decode');
+                 }
+               });
+             }}
+             on:contextmenu={(e) => handleContextMenu(e, 'Decode')}>
+          <span class="icon-only" title="Decode"><i class="fi fi-rc-hat-chef"></i></span>
+        </div>
+        <div class="icon-item" class:active={activeSidebarItem === 'Sitemap'}
+             on:click={() => {
+               const tabs = document.querySelectorAll('.tab');
+               tabs.forEach(tab => {
+                 if (tab.textContent === 'Sitemap') {
+                   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                   tab.classList.add('active');
+                   showInterface('Sitemap');
+                 }
+               });
+             }}
+             on:contextmenu={(e) => handleContextMenu(e, 'Sitemap')}>
+          <span class="icon-only" title="Sitemap"><i class="fi fi-sr-track"></i></span>
+        </div>
+      </div>
+    {/if}
   </div>
   
   <!-- Main Content -->
   <div class="main-content">
-    <!-- Tabs Bar -->
-    <div class="tabs">
-      <div class="tab active">Requests</div>
-      <div class="tab">Repeater</div>
-      <div class="tab">Fuzzer</div>
-      <div class="tab">Chat</div>
-      <div class="tab">Decode</div>
-      <div class="tab">Sitemap</div>
+    <!-- Tabs Bar with Navigation -->
+    <div class="tabs-wrapper">
+      {#if showLeftScroll}
+        <button class="tab-scroll-button left" on:click={scrollTabsLeft} aria-label="Scroll left">
+          <span>◀</span>
+        </button>
+      {/if}
+      
+      <div class="tabs" bind:this={tabsContainer}>
+        {#each tabs as tabName, index (tabName)}
+          <div 
+            class="tab" 
+            class:active={activeSidebarItem === tabName}
+            draggable="true"
+            on:dragstart={(e) => handleDragStart(e, tabName)}
+            on:dragover={(e) => handleDragOver(e, tabName)}
+            on:dragenter={(e) => handleDragEnter(e, tabName)}
+            on:dragleave={handleDragLeave}
+            on:drop={(e) => handleDrop(e, tabName)}
+            on:dragend={handleDragEnd}
+            on:click={handleTabClick}
+          >
+            {tabName}
+          </div>
+        {/each}
+      </div>
+      
+      {#if showRightScroll}
+        <button class="tab-scroll-button right" on:click={scrollTabsRight} aria-label="Scroll right">
+          <span>▶</span>
+        </button>
+      {/if}
     </div>
     
     <!-- Main Panel - Contains all interfaces -->
     <div class="main-panel">
-      <div id="requests-interface">
+      <div id="requests-interface" class:no-tabs={hideTopTabs}>
         <RequestsTab />
       </div>
 
-      <div id="repeater-interface">
+      <div id="repeater-interface" class:no-tabs={hideTopTabs}>
         <RepeaterTab />
       </div>
       
-      <div id="decode-encode-interface">
+      <div id="decode-encode-interface" class:no-tabs={hideTopTabs}>
         <DecodeEncodeTab />
       </div>
 
-      <div id="fuzzer-interface">
+      <div id="fuzzer-interface" class:no-tabs={hideTopTabs}>
         <FuzzTab />
       </div>
 
-      <div id="chat-interface">
+      <div id="chat-interface" class:no-tabs={hideTopTabs}>
         <ChatTab />
       </div>
 
-      <div id="sitemap-interface">
+      <div id="sitemap-interface" class:no-tabs={hideTopTabs}>
         <SitemapTab />
       </div>
       
       <!-- Settings Interface -->
-      <div id="settings-interface">
+      <div id="settings-interface" class:no-tabs={hideTopTabs}>
         <SettingsTab />
       </div>
     </div>
@@ -388,8 +658,8 @@
   }
   
   :global(body) {
-    background-color: #212121;
-    color: #fff;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     height: 100vh;
     overflow: hidden;
     margin: 0;
@@ -409,18 +679,18 @@
   .sidebar {
     position: relative;
     width: 200px;
-    background-color: #1a1a1a;
+    background-color: var(--bg-secondary);
     display: flex;
     flex-direction: column;
     transition: width 0.3s ease;
     border-radius: 4px;
     margin: 10px 10px 0 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-md);
     height: calc(100vh - 60px);
     overflow: hidden;
     z-index: 10;
     flex-shrink: 0;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-primary);
   }
   
   .sidebar.collapsed {
@@ -428,23 +698,29 @@
   }
   
   .toggle-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+    position: sticky;
+    top: 0;
     width: 24px;
     height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #333;
-    color: #fff;
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
     border-radius: 6px;
     cursor: pointer;
     z-index: 10;
+    margin: 10px 10px 10px auto;
+    flex-shrink: 0;
+    transition: margin 0.3s ease;
+  }
+  
+  .sidebar.collapsed .toggle-button {
+    margin: 10px auto;
   }
   
   .sidebar-content {
-    padding: 20px;
+    padding: 0 20px 20px 20px;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -463,19 +739,77 @@
   .sidebar-item {
     padding: 10px;
     cursor: pointer;
-    color: #ddd;
+    color: var(--text-secondary);
     border-radius: 8px;
     transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .sidebar-item .icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  
+  .sidebar-item .label {
+    white-space: nowrap;
   }
   
   .sidebar-item:hover {
-    color: #fff;
-    background-color: #2a2a2a;
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
   }
   
   /* Add styling for active sidebar item with red color */
   .sidebar-item.active {
-    color: #ff5252;
+    color: var(--accent-primary);
+  }
+  
+  /* Sidebar icons view when collapsed */
+  .sidebar-icons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 10px 0;
+    width: 100%;
+  }
+  
+  .icon-item {
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2px 0;
+  }
+  
+  .icon-item:hover {
+    background-color: var(--bg-tertiary);
+  }
+  
+  .icon-item.active {
+    background-color: var(--bg-tertiary);
+  }
+  
+  .icon-only {
+    font-size: 18px;
+    filter: grayscale(20%);
+  }
+  
+  .icon-item.active .icon-only {
+    filter: hue-rotate(340deg) saturate(2);
+  }
+  
+  .sidebar-divider {
+    width: 24px;
+    height: 1px;
+    background-color: var(--border-primary);
+    margin: 8px 0;
   }
   
   .main-content {
@@ -488,20 +822,66 @@
     min-width: 0; /* Prevent flex items from overflowing */
   }
   
+  .tabs-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+  
   .tabs {
     display: flex;
-    background-color: #1a1a1a;
+    background-color: var(--bg-secondary);
     padding: 5px 10px;
     border-radius: 4px;
-    margin-bottom: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid #ddd;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-primary);
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex: 1;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+  
+  .tabs::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+  
+  .tab-scroll-button {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+    box-shadow: var(--shadow-md);
+    flex-shrink: 0;
+    min-width: 36px;
+    height: 36px;
+  }
+  
+  .tab-scroll-button:hover {
+    background-color: var(--bg-tertiary);
+  }
+  
+  .tab-scroll-button:active {
+    background-color: var(--bg-hover);
+  }
+  
+  .tab-scroll-button span {
+    font-size: 14px;
+    line-height: 1;
   }
   
   .tab {
     padding: 10px 20px;
     cursor: pointer;
-    color: #999;
+    color: var(--text-muted);
     text-align: center;
     border-radius: 7px;
     transition: background-color 0.2s ease;
@@ -509,13 +889,33 @@
   }
   
   .tab:hover {
-    background-color: #2a2a2a;
+    background-color: var(--bg-tertiary);
   }
   
   .tab.active {
-    background-color: #2a2a2a;
-    color: #fff;
-    border: 2px solid #ff5252;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 2px solid var(--accent-primary);
+  }
+  
+  /* Drag and drop styles */
+  .tab.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+  }
+  
+  .tab.drag-over {
+    border-left: 3px solid var(--accent-primary);
+    padding-left: 17px;
+  }
+  
+  .tab {
+    user-select: none;
+    cursor: grab;
+  }
+  
+  .tab:active {
+    cursor: grabbing;
   }
   
   .main-panel {
@@ -528,23 +928,39 @@
   }
   
   #requests-interface {
-    height: calc(100vh - 190px);
+    height: calc(100vh - 192px);
+  }
+
+  #requests-interface.no-tabs {
+    height: calc(100vh - 122px);
   }
 
   #repeater-interface {
-    height: calc(100vh - 190px);
+    height: calc(100vh - 192px);
     display: none;
+  }
+
+  #repeater-interface.no-tabs {
+    height: calc(100vh - 122px);
   }
   
   #fuzzer-interface {
-    height: calc(100vh - 110px);
+    height: calc(100vh - 108px);
     overflow: auto;
     display: none;
   }
+
+  #fuzzer-interface.no-tabs {
+    height: calc(100vh - 35px);
+  }
   
   #sitemap-interface {
-    height: calc(100vh - 190px);
+    height: calc(100vh - 192px);
     display: none;
+  }
+
+  #sitemap-interface.no-tabs {
+    height: calc(100vh - 122px);
   }
 
   #chat-interface {
@@ -552,25 +968,44 @@
     display: none;
   }
 
-  #decode-encode-interface, #settings-interface {
-    display: none;
+  #chat-interface.no-tabs {
     height: calc(100vh - 50px);
+  }
+
+  #settings-interface {
+    display: none;
+    height: calc(100vh - 38px);
     width: 100%;
     background-color: transparent;
     border-radius: 4px;
     overflow: auto;
   }
+
+  #decode-encode-interface {
+    display: none;
+    height: calc(100vh - 192px);
+    width: 100%;
+    background-color: transparent;
+    border-radius: 4px;
+    overflow: auto;
+  }
+
+
+  #decode-encode-interface.no-tabs {
+    height: calc(100vh - 122px);
+    overflow: auto;
+  }
   
 
   :global(.input-container) {
-    background-color: #2a2a2a;
+    background-color: var(--bg-tertiary);
     border-radius: 8px;
     padding: 10px;
     margin-bottom: 10px;
   }
 
   :global(.table-container) {
-    background-color: #2a2a2a;
+    background-color: var(--bg-tertiary);
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 10px;
@@ -584,7 +1019,7 @@
 
   :global(th, td) {
     padding: 10px;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid var(--border-primary);
   }
 
   :global(button) {
@@ -607,11 +1042,11 @@
   }
   
   .startup-dialog {
-    background-color: #2a2a2a;
+    background-color: var(--bg-tertiary);
     width: 100%;
     max-width: 500px;
     border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-lg);
     padding: 25px;
     display: flex;
     flex-direction: column;
@@ -626,12 +1061,12 @@
   .dialog-header h1 {
     font-size: 24px;
     margin-bottom: 5px;
-    color: #fff;
+    color: var(--text-primary);
   }
   
   .dialog-header p {
     font-size: 16px;
-    color: #aaa;
+    color: var(--text-secondary);
     margin: 0;
   }
   
@@ -649,18 +1084,18 @@
       "icon title"
       "icon description";
     align-items: center;
-    background-color: #333;
+    background-color: var(--bg-hover);
     border: none;
     border-radius: 8px;
     padding: 15px;
     cursor: pointer;
     transition: background-color 0.2s;
     text-align: left;
-    color: #fff;
+    color: var(--text-primary);
   }
   
   .option-button:hover {
-    background-color: #444;
+    background-color: var(--bg-active);
   }
   
   .option-button:disabled {
@@ -674,20 +1109,20 @@
     justify-content: center;
     align-items: center;
     font-size: 24px;
-    color: #ff5252;
+    color: var(--accent-primary);
   }
   
   .option-button span {
     grid-area: title;
     font-size: 16px;
     font-weight: bold;
-    color: #fff;
+    color: var(--text-primary);
   }
   
   .option-description {
     grid-area: description;
     font-size: 14px;
-    color: #aaa;
+    color: var(--text-secondary);
     margin: 0;
   }
 </style>

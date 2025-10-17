@@ -9,7 +9,7 @@
     console.log('Standalone Requests page mounted');
     
     // Set the page title
-    document.title = 'KProxy - Fuzzer';
+    document.title = 'Kanti - Fuzzer';
     
 
   });

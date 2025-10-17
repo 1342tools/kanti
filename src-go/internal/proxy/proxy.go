@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/1342tools/kproxy/backend/pkg/models"
+	"github.com/1342tools/kanti/backend/pkg/models"
 	"github.com/andybalholm/brotli"
 	"github.com/elazarl/goproxy"
 )

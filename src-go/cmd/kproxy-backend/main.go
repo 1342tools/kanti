@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/1342tools/kproxy/backend/internal/ipc"
-	"github.com/1342tools/kproxy/backend/internal/proxy"
-	"github.com/1342tools/kproxy/backend/pkg/models"
+	"github.com/1342tools/kanti/backend/internal/ipc"
+	"github.com/1342tools/kanti/backend/internal/proxy"
+	"github.com/1342tools/kanti/backend/pkg/models"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	)
 	flag.Parse()
 
-	log.Println("KProxy Backend starting...")
+	log.Println("Kanti Backend starting...")
 	log.Printf("Data directory: %s\n", *dataDir)
 	log.Printf("IPC port: %d\n", *ipcPort)
 	log.Printf("Proxy port: %d\n", *proxyPort)
@@ -65,7 +65,7 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	log.Println("KProxy Backend ready. Waiting for commands via IPC...")
+	log.Println("Kanti Backend ready. Waiting for commands via IPC...")
 	log.Println("Press Ctrl+C to exit")
 
 	// Wait for interrupt signal
@@ -97,5 +97,5 @@ func getDefaultDataDir() string {
 		return "./data"
 	}
 
-	return filepath.Join(home, ".kproxy")
+	return filepath.Join(home, ".kanti")
 }

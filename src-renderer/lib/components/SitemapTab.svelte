@@ -7,6 +7,7 @@
   import CodeMirror from "svelte-codemirror-editor";
   import { oneDark } from "@codemirror/theme-one-dark";
   import { scopeStore, type ScopeSettings } from '$lib/stores/scope';
+  import '$lib/styles/context-menu.css';
 
   // Import global types
   type CapturedRequest = globalThis.CapturedRequest;
@@ -944,6 +945,7 @@
   <div 
     class="context-menu"
     style="top: {contextMenuY}px; left: {contextMenuX}px;"
+    on:mouseleave={closeContextMenu}
   >
     <div class="context-menu-item" on:click={() => {
       if (contextMenuRequest) sendToRepeater(contextMenuRequest);
@@ -959,6 +961,7 @@
   <div 
     class="context-menu"
     style="top: {panelContextMenuY}px; left: {panelContextMenuX}px;"
+    on:mouseleave={closePanelContextMenu}
   >
   <div class="context-menu-item" on:click={() => {
       if (selectedRequest) sendToRepeater(selectedRequest);
@@ -1523,29 +1526,6 @@
     background-color: #ff3838;
   }
   
-  /* Context Menu Styles */
-  .context-menu {
-    position: fixed;
-    background-color: #2a2a2a;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    z-index: 100;
-    min-width: 180px;
-    padding: 4px 0;
-    overflow: hidden;
-    animation: fadeIn 0.15s ease-out;
-  }
-  
-  .context-menu-item {
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    color: #fff;
-  }
-  
-  .context-menu-item:hover {
-    background-color: #444;
-  }
   
   /* Loading Overlay */
   .loading-overlay {

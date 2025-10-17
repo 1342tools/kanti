@@ -24,6 +24,11 @@ export class GoBackendManager {
   private ipcPort = 9090;
   private isReady = false;
   private eventSource: any = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
+  private reconnectDelay = 1000; // Start with 1 second
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private shouldReconnect = false;
 
   async start(): Promise<void> {
     if (this.process) {
@@ -31,8 +36,8 @@ export class GoBackendManager {
       return;
     }
 
-    const binary = this.getBinaryPath();
-    const dataDir = path.join(app.getPath('userData'), 'kproxy-go');
+    const binary = await this.ensureBinaryInUserData();
+    const dataDir = path.join(app.getPath('userData'), 'kanti-go');
 
     // Ensure binary exists
     if (!fs.existsSync(binary)) {
@@ -78,11 +83,23 @@ export class GoBackendManager {
     this.isReady = true;
     console.log('Go backend ready');
     
+    // Enable automatic reconnection
+    this.shouldReconnect = true;
+    
     // Connect to event stream
     this.connectEventStream();
   }
 
   async stop(): Promise<void> {
+    // Disable automatic reconnection
+    this.shouldReconnect = false;
+    
+    // Clear any pending reconnect timer
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    
     // Disconnect event stream first
     this.disconnectEventStream();
     
@@ -110,6 +127,14 @@ export class GoBackendManager {
   // Proxy control methods
   async startProxy(port: number): Promise<GoProxyStatus> {
     const response = await this.request('POST', '/api/proxy/start', { port });
+    
+    // Ensure event stream is connected when proxy starts
+    if (!this.eventSource || !this.eventSource.active) {
+      console.log('Reconnecting event stream when proxy starts...');
+      this.reconnectAttempts = 0; // Reset reconnect attempts
+      this.connectEventStream();
+    }
+    
     return response.data;
   }
 
@@ -145,29 +170,137 @@ export class GoBackendManager {
   // Helper methods
   private getBinaryPath(): string {
     const platform = process.platform;
-    let binaryName = 'kproxy-backend';
+    let binaryName = 'kanti-backend';
     
     if (platform === 'win32') {
       binaryName += '.exe';
     }
 
+    console.log(`Looking for binary: ${binaryName}`);
+    console.log(`Platform: ${platform}`);
+    console.log(`DEV mode: ${import.meta.env.DEV}`);
+
     // Check if running from development
     if (import.meta.env.DEV) {
       // Development: look in src-go/bin/
       const devPath = path.join(process.cwd(), 'src-go', 'bin', binaryName);
+      console.log(`Checking dev path: ${devPath}`);
       if (fs.existsSync(devPath)) {
+        console.log(`✓ Found binary at: ${devPath}`);
         return devPath;
       }
     }
 
-    // Production: look in app resources
-    const resourcesPath = path.join(process.resourcesPath, 'bin', binaryName);
-    if (fs.existsSync(resourcesPath)) {
-      return resourcesPath;
+    // Production: When packaged with asar, binaries are unpacked to .asar.unpacked
+    const appPath = app.getAppPath();
+    const resourcesPath = process.resourcesPath;
+    
+    console.log(`App path: ${appPath}`);
+    console.log(`Resources path: ${resourcesPath}`);
+    
+    // List of paths to try in order
+    const pathsToTry = [];
+    
+    // Check if running from asar
+    if (appPath.includes('app.asar')) {
+      // Try .asar.unpacked location first (this is where unpacked files go)
+      pathsToTry.push(
+        path.join(appPath.replace('app.asar', 'app.asar.unpacked'), 'resources', 'bin', binaryName)
+      );
+      
+      // Also try directly in the unpacked .vite directory structure
+      pathsToTry.push(
+        path.join(appPath.replace('app.asar', 'app.asar.unpacked'), '.vite', 'main', 'resources', 'bin', binaryName)
+      );
+    }
+    
+    // Try standard resources path (outside asar)
+    pathsToTry.push(
+      path.join(resourcesPath, 'bin', binaryName)
+    );
+    
+    // Try relative to app path
+    pathsToTry.push(
+      path.join(appPath, 'resources', 'bin', binaryName)
+    );
+    
+    // Try in .vite directory structure
+    pathsToTry.push(
+      path.join(appPath, '.vite', 'main', 'resources', 'bin', binaryName)
+    );
+
+    // Try each path
+    for (const testPath of pathsToTry) {
+      console.log(`Checking: ${testPath}`);
+      if (fs.existsSync(testPath)) {
+        console.log(`✓ Found binary at: ${testPath}`);
+        return testPath;
+      }
     }
 
-    // Fallback: look relative to app path
-    return path.join(app.getAppPath(), 'resources', 'bin', binaryName);
+    // If nothing found, log all attempted paths and throw error with the first path
+    console.error('Binary not found. Attempted paths:');
+    pathsToTry.forEach(p => console.error(`  - ${p}`));
+    
+    // Return the most likely path so the error message is helpful
+    return pathsToTry[0];
+  }
+
+  /**
+   * Ensures the Go binary exists in the userData directory.
+   * If not present, copies it from the bundled location.
+   * Returns the path to the binary in userData.
+   */
+  private async ensureBinaryInUserData(): Promise<string> {
+    const platform = process.platform;
+    let binaryName = 'kanti-backend';
+    
+    if (platform === 'win32') {
+      binaryName += '.exe';
+    }
+
+    // Define the target location in userData
+    const userDataDir = app.getPath('userData');
+    const binDir = path.join(userDataDir, 'bin');
+    const targetBinaryPath = path.join(binDir, binaryName);
+
+    console.log(`Target binary location: ${targetBinaryPath}`);
+
+    // Check if binary already exists in userData
+    if (fs.existsSync(targetBinaryPath)) {
+      console.log(`✓ Binary already exists in userData directory`);
+      return targetBinaryPath;
+    }
+
+    console.log(`Binary not found in userData, will copy from bundled location...`);
+
+    // Get the bundled binary path
+    const sourceBinaryPath = this.getBinaryPath();
+
+    if (!fs.existsSync(sourceBinaryPath)) {
+      throw new Error(`Source binary not found at: ${sourceBinaryPath}`);
+    }
+
+    console.log(`Copying binary from: ${sourceBinaryPath}`);
+    console.log(`Copying binary to: ${targetBinaryPath}`);
+
+    // Create bin directory if it doesn't exist
+    if (!fs.existsSync(binDir)) {
+      fs.mkdirSync(binDir, { recursive: true });
+      console.log(`Created directory: ${binDir}`);
+    }
+
+    // Copy the binary
+    fs.copyFileSync(sourceBinaryPath, targetBinaryPath);
+    console.log(`✓ Binary copied successfully`);
+
+    // Make the binary executable on Unix-like systems
+    if (platform !== 'win32') {
+      fs.chmodSync(targetBinaryPath, 0o755);
+      console.log(`✓ Set binary as executable`);
+    }
+
+    return targetBinaryPath;
   }
 
   private async request(method: string, path: string, body?: any): Promise<any> {
@@ -223,8 +356,19 @@ export class GoBackendManager {
 
   // Connect to the Go backend's SSE event stream
   private connectEventStream(): void {
+    // Don't reconnect if we shouldn't or if already connected
+    if (!this.shouldReconnect) {
+      console.log('Skipping event stream connection (shouldReconnect is false)');
+      return;
+    }
+    
+    if (this.eventSource?.active) {
+      console.log('Event stream already active, skipping reconnection');
+      return;
+    }
+    
     try {
-      console.log('Connecting to Go backend event stream...');
+      console.log(`Connecting to Go backend event stream (attempt ${this.reconnectAttempts + 1})...`);
       
       const eventStreamUrl = this.getEventStreamUrl();
       console.log(`Event stream URL: ${eventStreamUrl}`);
@@ -233,16 +377,22 @@ export class GoBackendManager {
       fetch(eventStreamUrl).then(response => {
         if (!response.ok) {
           console.error('Failed to connect to event stream:', response.statusText);
+          this.scheduleReconnect();
           return;
         }
         
         console.log('✓ Connected to Go backend event stream successfully');
+        
+        // Reset reconnect attempts on successful connection
+        this.reconnectAttempts = 0;
+        this.reconnectDelay = 1000;
         
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
         
         if (!reader) {
           console.error('No reader available for event stream');
+          this.scheduleReconnect();
           return;
         }
         
@@ -259,6 +409,7 @@ export class GoBackendManager {
               
               if (done) {
                 console.log('Event stream ended');
+                this.eventSource.active = false;
                 break;
               }
               
@@ -295,20 +446,59 @@ export class GoBackendManager {
           } catch (error) {
             if (this.eventSource?.active) {
               console.error('Error reading event stream:', error);
+              this.eventSource.active = false;
             }
           } finally {
             reader.releaseLock();
+            // Schedule reconnection if stream ended unexpectedly and we should reconnect
+            if (this.shouldReconnect && !this.eventSource?.active) {
+              console.log('Event stream closed, scheduling reconnection...');
+              this.scheduleReconnect();
+            }
           }
         };
         
         processStream();
       }).catch(error => {
         console.error('Failed to connect to event stream:', error);
+        this.scheduleReconnect();
       });
       
     } catch (error) {
       console.error('Error setting up event stream:', error);
+      this.scheduleReconnect();
     }
+  }
+  
+  // Schedule a reconnection attempt with exponential backoff
+  private scheduleReconnect(): void {
+    if (!this.shouldReconnect) {
+      console.log('Not scheduling reconnect (shouldReconnect is false)');
+      return;
+    }
+    
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error(`Max reconnection attempts (${this.maxReconnectAttempts}) reached. Giving up.`);
+      return;
+    }
+    
+    // Clear any existing timer
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    
+    this.reconnectAttempts++;
+    
+    // Calculate delay with exponential backoff (max 30 seconds)
+    const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 30000);
+    
+    console.log(`Scheduling reconnection attempt ${this.reconnectAttempts} in ${delay}ms...`);
+    
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connectEventStream();
+    }, delay);
   }
 
   // Disconnect from event stream

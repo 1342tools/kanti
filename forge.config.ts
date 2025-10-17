@@ -1,7 +1,6 @@
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { MakerDeb } from '@electron-forge/maker-deb';
-import { MakerRpm } from '@electron-forge/maker-rpm';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
 import { ForgePlugin_Vite, OnRebuildDo } from './build-plugins/forge-plugin.vite';
@@ -10,7 +9,9 @@ import { type ForgeConfig } from '@electron-forge/shared-types';
 const config: ForgeConfig = {
 	// https://electron.github.io/packager/main/interfaces/Options.html
 	packagerConfig: {
-		asar: true,
+		asar: {
+			unpack: '**/resources/bin/**'
+		},
 		// prune - "Walks the node_modules dependency tree to remove all of the packages specified in the
 		// devDependencies section of package.json from the outputted Electron app. Defaults to true."
 		//
@@ -19,7 +20,8 @@ const config: ForgeConfig = {
 		icon: './static/icon',
 	},
 	rebuildConfig: {
-		//force: true,
+		force: false,
+		onlyModules: [], // Skip native rebuilds - no native modules needed
 		disablePreGypCopy: true,
 	},
 	makers: [
@@ -30,7 +32,6 @@ const config: ForgeConfig = {
 			setupIcon: './static/icon.ico'
       }),
 	  new MakerZIP({}, ['darwin']),
-	  new MakerRpm({}),
 	  new MakerDeb({
 			options: {
 				// Path to a single image that will act as icon for the application
@@ -70,7 +71,7 @@ const config: ForgeConfig = {
 		  config: {
 			repository: {
 			  owner: 'kusonooyasumi',
-			  name: 'kproxy'
+			  name: 'kanti'
 			},
 			prerelease: false
 		  }

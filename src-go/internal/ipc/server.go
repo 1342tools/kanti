@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/1342tools/kproxy/backend/internal/proxy"
-	"github.com/1342tools/kproxy/backend/pkg/models"
+	"github.com/1342tools/kanti/backend/internal/proxy"
+	"github.com/1342tools/kanti/backend/pkg/models"
 )
 
 // Server handles IPC communication with Electron

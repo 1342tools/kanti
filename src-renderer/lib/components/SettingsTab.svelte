@@ -4,6 +4,7 @@
   import GeneralSettings from './settings/GeneralSettings.svelte';
   import ScopeSettings from './settings/ScopeSettings.svelte';
   import ProjectSettings from './settings/ProjectSettings.svelte';
+  import ThemeSettings from './settings/ThemeSettings.svelte';
   
   // Props that can be passed to the component
   export let standalone = false; // Whether the component is running in standalone mode (new window)
@@ -39,6 +40,7 @@
     <div class="sidebar-item" class:active={selectedSection === 'Project'} on:click={() => selectSection('Project')}>Project</div>
     <div class="sidebar-item" class:active={selectedSection === 'Proxy'} on:click={() => selectSection('Proxy')}>Proxy</div>
     <div class="sidebar-item" class:active={selectedSection === 'Scope'} on:click={() => selectSection('Scope')}>Scope</div>
+    <div class="sidebar-item" class:active={selectedSection === 'Theme'} on:click={() => selectSection('Theme')}>Theme</div>
   </div>
   
   <!-- Settings Content -->
@@ -57,6 +59,11 @@
       <div class="settings-section">
         <h2>Scope Settings</h2>
         <svelte:component this={ScopeSettings} />
+      </div>
+    {:else if selectedSection === 'Theme'}
+      <div class="settings-section">
+        <h2>Theme & Visual Options</h2>
+        <svelte:component this={ThemeSettings} />
       </div>
     {/if}
   </div>

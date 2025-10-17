@@ -28,6 +28,15 @@ export interface ApiKeyStore {
   axonbox: string;
 }
 
+// Theme type
+export type Theme = 'light' | 'dark' | 'system';
+
+// Visual Settings interface
+export interface VisualSettings {
+  hideTopTabs: boolean;
+  theme: Theme;
+}
+
 // Default model configurations for each provider
 export const defaultModelConfigs: ProviderModelConfigs = {
   openai: {
@@ -66,6 +75,10 @@ export const apiKeys = writable<ApiKeyStore>(defaultApiKeys);
 export const currentProvider = writable<Provider>('openai');
 export const modelConfigs = writable<ProviderModelConfigs>(defaultModelConfigs);
 export const currentModel = writable<string>(defaultModelConfigs.openai.defaultModel);
+export const visualSettings = writable<VisualSettings>({ 
+  hideTopTabs: false,
+  theme: 'system'
+});
 
 // Load from localStorage if in browser
 if (browser) {
@@ -79,6 +92,16 @@ if (browser) {
     };
     
     apiKeys.set(savedApiKeys);
+    
+    // Load visual settings
+    const savedVisualSettings = localStorage.getItem('visual_settings');
+    if (savedVisualSettings) {
+      try {
+        visualSettings.set(JSON.parse(savedVisualSettings));
+      } catch (e) {
+        console.error('Failed to parse visual settings:', e);
+      }
+    }
     
     const savedProvider = localStorage.getItem('current_provider') as Provider;
     if (savedProvider) {
@@ -139,5 +162,9 @@ if (browser) {
   
   modelConfigs.subscribe($configs => {
     localStorage.setItem('model_configs', JSON.stringify($configs));
+  });
+  
+  visualSettings.subscribe($settings => {
+    localStorage.setItem('visual_settings', JSON.stringify($settings));
   });
 }

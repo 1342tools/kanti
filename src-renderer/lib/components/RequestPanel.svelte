@@ -5,6 +5,7 @@
   import { goto } from '$app/navigation';
   import { addRepeaterRequest } from '$lib/stores/repeater';
   import { clickOutside } from '$lib/actions/clickOutside';
+  import '$lib/styles/context-menu.css';
 
   export let request: CapturedRequest | null = null;
 
@@ -178,30 +179,10 @@
     overflow-y: auto;
   }
 
-  .context-menu {
-    position: fixed;
-    background: #2a2a2a;
-    border: 1px solid #444;
-    border-radius: 4px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    min-width: 150px;
-  }
-
-  .context-menu-item {
-    padding: 8px 12px;
-    color: #ddd;
-    cursor: pointer;
-    font-size: 13px;
-  }
-
-  .context-menu-item:hover {
-    background: #3a3a3a;
-  }
 </style>
 
 {#if contextMenu.show}
-  <div class="context-menu" style={`left: ${contextMenu.x}px; top: ${contextMenu.y}px`}>
+  <div class="context-menu" style={`left: ${contextMenu.x}px; top: ${contextMenu.y}px`} on:mouseleave={closeContextMenu}>
     <div class="context-menu-item" on:click={copyContent}>Copy {panelType}</div>
     <div class="context-menu-item" on:click={sendToRepeater}>Send to Repeater</div>
   </div>

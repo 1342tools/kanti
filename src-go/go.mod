@@ -1,4 +1,4 @@
-module github.com/1342tools/kproxy/backend
+module github.com/1342tools/kanti/backend
 
 go 1.24.2
 

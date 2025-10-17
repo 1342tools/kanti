@@ -1,6 +1,85 @@
 @import "tailwindcss";
 
+/* Theme Variables */
+:root {
+  /* Light Theme Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #e8e8e8;
+  --bg-hover: #e0e0e0;
+  --bg-active: #d5d5d5;
+  
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-tertiary: #6a6a6a;
+  --text-muted: #9a9a9a;
+  
+  --border-primary: #d0d0d0;
+  --border-secondary: #e0e0e0;
+  --border-hover: #b0b0b0;
+  
+  --accent-primary: #ff5252;
+  --accent-hover: #ff3838;
+  --accent-light: #ff8080;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  
+  --scrollbar-track: #f0f0f0;
+  --scrollbar-thumb: #c0c0c0;
+  --scrollbar-thumb-hover: #a0a0a0;
+  
+  --input-bg: #ffffff;
+  --input-border: #d0d0d0;
+  --input-focus: #ff5252;
+  
+  --titlebar-bg: #f0f0f0;
+  --titlebar-text: #1a1a1a;
+}
 
+:root.dark {
+  /* Dark Theme Colors */
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252525;
+  --bg-tertiary: #2a2a2a;
+  --bg-hover: #333333;
+  --bg-active: #3a3a3a;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --text-tertiary: #b0b0b0;
+  --text-muted: #6a6a6a;
+  
+  --border-primary: #444444;
+  --border-secondary: #333333;
+  --border-hover: #555555;
+  
+  --accent-primary: #ff5252;
+  --accent-hover: #ff3838;
+  --accent-light: #ff8080;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  
+  --scrollbar-track: #1e1e1e;
+  --scrollbar-thumb: #444444;
+  --scrollbar-thumb-hover: #555555;
+  
+  --input-bg: #2a2a2a;
+  --input-border: #444444;
+  --input-focus: #ff5252;
+  
+  --titlebar-bg: #212121;
+  --titlebar-text: #ffffff;
+}
+
+/* Apply theme colors globally */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
 
 ::-webkit-scrollbar {
   width: 8px;
@@ -8,16 +87,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e1e1e;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #444;
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--scrollbar-thumb-hover);
 }
 
   /* Modern Theme */

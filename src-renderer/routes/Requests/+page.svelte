@@ -9,7 +9,7 @@
     console.log('Standalone Requests page mounted');
     
     // Set the page title
-    document.title = 'KProxy - Requests';
+    document.title = 'Kanti - Requests';
     
     // Ensure any parent page elements are removed
     // This is a more direct approach than trying to hide them after rendering

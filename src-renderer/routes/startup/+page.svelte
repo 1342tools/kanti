@@ -97,7 +97,7 @@
 <div class="startup-container">
   <div class="startup-dialog">
     <div class="dialog-header">
-      <h1>Welcome to KProxy</h1>
+      <h1>Welcome to Kanti</h1>
       <p>Select how you would like to start</p>
     </div>
     
@@ -114,7 +114,7 @@
           </svg>
         </div>
         <span>Create New Project</span>
-        <p class="option-description">Start a new KProxy project file</p>
+        <p class="option-description">Start a new Kanti project file</p>
       </button>
       
       <button 
@@ -129,7 +129,7 @@
           </svg>
         </div>
         <span>Open Existing Project</span>
-        <p class="option-description">Open a previously saved KProxy project</p>
+        <p class="option-description">Open a previously saved Kanti project</p>
       </button>
       
       <button 
@@ -144,7 +144,7 @@
           </svg>
         </div>
         <span>Continue Without Project</span>
-        <p class="option-description">Use KProxy without saving data to a project file</p>
+        <p class="option-description">Use Kanti without saving data to a project file</p>
       </button>
     </div>
     

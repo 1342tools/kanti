@@ -82,10 +82,10 @@ func (cm *CertificateManager) generateCA() error {
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			CommonName:         "KProxy CA",
+			CommonName:         "Kanti CA",
 			Country:            []string{"US"},
-			Organization:       []string{"KProxy"},
-			OrganizationalUnit: []string{"KProxy Certificate Authority"},
+			Organization:       []string{"Kanti"},
+			OrganizationalUnit: []string{"Kanti Certificate Authority"},
 		},
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
@@ -213,8 +213,8 @@ func (cm *CertificateManager) GenerateServerCertificate(domain string) (*tls.Cer
 		Subject: pkix.Name{
 			CommonName:         domain,
 			Country:            []string{"US"},
-			Organization:       []string{"KProxy"},
-			OrganizationalUnit: []string{"KProxy Proxy Server"},
+			Organization:       []string{"Kanti"},
+			OrganizationalUnit: []string{"Kanti Proxy Server"},
 		},
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,

@@ -208,9 +208,9 @@ class ProjectManager {
       // Show save dialog
       const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
         title: 'Save Project',
-        defaultPath: path.join(this.getProjectsDirectory(), `${projectData.name || 'untitled'}.kproxy`),
+        defaultPath: path.join(this.getProjectsDirectory(), `${projectData.name || 'untitled'}.kanti`),
         filters: [
-          { name: 'KProxy Projects', extensions: ['kproxy'] }
+          { name: 'Kanti Projects', extensions: ['kanti'] }
         ]
       });
       
@@ -226,7 +226,7 @@ class ProjectManager {
       
       // Update project name from filename if not set
       if (!projectData.name) {
-        this.currentProject!.name = path.basename(filePath, '.kproxy');
+        this.currentProject!.name = path.basename(filePath, '.kanti');
       }
       
       // Save to the selected path
@@ -265,7 +265,7 @@ class ProjectManager {
         title: 'Open Project',
         defaultPath: this.getProjectsDirectory(),
         filters: [
-          { name: 'KProxy Projects', extensions: ['kproxy'] }
+          { name: 'Kanti Projects', extensions: ['kanti'] }
         ],
         properties: ['openFile']
       });
@@ -293,7 +293,7 @@ class ProjectManager {
    * Get or create the default projects directory
    */
   getProjectsDirectory(): string {
-    const userDataPath = path.join(os.homedir(), 'KProxy', 'Projects');
+    const userDataPath = path.join(os.homedir(), 'Kanti', 'Projects');
     
     // Create the directory if it doesn't exist
     if (!fs.existsSync(userDataPath)) {

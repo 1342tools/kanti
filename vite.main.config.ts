@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { builtinModules } from 'node:module';
+import { copy } from './build-plugins/vite-plugin.copy';
 
 export default defineConfig({
 	build: {
@@ -15,7 +16,10 @@ export default defineConfig({
 			external: ['electron', ...builtinModules.map((m) => [m, `node:${m}`]).flat()],
 		},
 	},
-	plugins: [],
+	plugins: [
+		// Copy Go backend binaries to the build output
+		copy('./src-go/bin', './resources/bin', true),
+	],
 	resolve: {
 		// Load the Node.js entry.
 		mainFields: ['module', 'jsnext:main', 'jsnext'],

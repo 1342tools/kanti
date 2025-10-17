@@ -32,4 +32,4 @@ Thumbs.db
 
 # Data directory (certificates, cache)
 data/
-.kproxy/
+.kanti/

@@ -160,7 +160,7 @@ const createStartupDialog = async () => {
     resizable: false,
     frame: false,
     show: false,
-    title: 'KProxy - Start Project',
+    title: 'Kanti - Start Project',
     titleBarStyle: 'hidden',
     titleBarOverlay: {
       color: '#2a2a2a',
@@ -216,7 +216,7 @@ const createTabWindow = async (tabName: string) => {
   const tabWindow = new BrowserWindow({
     width: 1000,
     height: 700,
-    title: `KProxy - ${tabName}`,
+    title: `Kanti - ${tabName}`,
     // Window Controls Overlay API
     titleBarStyle: 'hidden',
     titleBarOverlay: {
@@ -294,7 +294,7 @@ app.on('ready', async () => {
     console.error('Failed to start Go backend:', error);
     dialog.showErrorBox(
       'Backend Error',
-      `Failed to start KProxy backend: ${(error as Error).message}`
+      `Failed to start Kanti backend: ${(error as Error).message}`
     );
     app.quit();
     return;
@@ -518,7 +518,7 @@ function registerProxyIpcHandlers() {
       // Ask user where to save certificate
       const { canceled, filePath } = await dialog.showSaveDialog({
         title: 'Export CA Certificate',
-        defaultPath: 'kproxy-ca.crt',
+        defaultPath: 'kanti-ca.crt',
         filters: [
           { name: 'Certificates', extensions: ['crt', 'pem'] }
         ]

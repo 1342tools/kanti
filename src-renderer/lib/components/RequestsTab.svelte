@@ -13,6 +13,7 @@
   import { addRepeaterRequest } from '$lib/stores/repeater';
   import { projectState } from '$lib/stores/project';
   import '$lib/styles/requests.css'
+  import '$lib/styles/context-menu.css';
   
   // Add search functionality
   let searchText = '';
@@ -683,11 +684,12 @@
       class="context-menu" 
       style={`left: ${contextMenuX}px; top: ${contextMenuY}px`}
       on:click|stopPropagation
+      on:mouseleave={closeContextMenu}
     >
-      <div class="menu-item" on:click={() => contextMenuRequest && sendToRepeater(contextMenuRequest)}>
+      <div class="context-menu-item" on:click={() => contextMenuRequest && sendToRepeater(contextMenuRequest)}>
         Send to Repeater
       </div>
-      <div class="menu-item" on:click={() => contextMenuRequest && copyRequestUrl(contextMenuRequest)}>
+      <div class="context-menu-item" on:click={() => contextMenuRequest && copyRequestUrl(contextMenuRequest)}>
         Copy URL
       </div>
     </div>

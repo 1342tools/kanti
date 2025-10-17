@@ -1,8 +1,12 @@
-<script>
+<script lang="ts">
+  import { visualSettings } from '$lib/stores/settings';
 
   // Props that can be passed to the component
   export let standalone = false; // Whether the component is running in standalone mode (new window)
   
+  // Track hideTopTabs setting
+  let hideTopTabs = $visualSettings.hideTopTabs;
+  $: hideTopTabs = $visualSettings.hideTopTabs;
   
   // Check if running in Electron
   const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
@@ -58,7 +62,7 @@
           default:
             throw new Error('Invalid decoding method');
         }
-      } catch (e) {
+      } catch (e: any) {
         error = `Decoding error: ${e.message}`;
         outputText = '';
       }
@@ -124,7 +128,6 @@
       border-radius: 4px;
       border: 1px solid #ddd;
       background-color: #1a1a1a;
-      height: calc(100vh - 128.5px);
       overflow: auto;
     }
   
