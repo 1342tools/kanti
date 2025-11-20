@@ -481,6 +481,14 @@
       // Listen for response batch updates (more efficient than individual responses)
       window.electronAPI.receive('proxy-response-batch', (responseBatch: CapturedRequest[]) => {
         console.log(`Response batch: ${responseBatch.length} responses`);
+        
+        // Debug: log response batch details
+        console.log('DEBUG: Frontend received response batch:');
+        responseBatch.forEach((resp, index) => {
+          const bodyInfo = resp.body ? `${resp.body.length} bytes` : 'no body';
+          console.log(`  Response ${index} (ID ${resp.id}): ${resp.method} ${resp.path}, body: ${bodyInfo}`);
+        });
+        
         // Update requests in bulk for better performance
         const updatedRequests = [...requests];
         let hasUpdates = false;
@@ -488,12 +496,41 @@
         responseBatch.forEach(responseData => {
           const index = updatedRequests.findIndex(r => r.id === responseData.id);
           if (index !== -1) {
-            updatedRequests[index] = responseData;
+            const oldRequest = updatedRequests[index];
+            
+            // Debug: log what we're updating
+            console.log(`DEBUG: Updating request ID ${responseData.id}:`, {
+              oldBody: oldRequest.body ? `${oldRequest.body.length} bytes` : 'no body',
+              newBody: responseData.body ? `${responseData.body.length} bytes` : 'no body',
+              preservingRequestBody: !!oldRequest.body
+            });
+            
+            // Preserve the original request body and only update response-related fields
+            updatedRequests[index] = {
+              ...oldRequest, // Keep original request data including body
+              // Only update response-related fields
+              status: responseData.status,
+              responseHeaders: responseData.responseHeaders,
+              responseBody: responseData.responseBody,
+              responseLength: responseData.responseLength,
+              responseTime: responseData.responseTime,
+              error: responseData.error
+            };
+            
             hasUpdates = true;
             
-            // Update selected request if it matches
+            // Update selected request if it matches (preserving request body)
             if (selectedRequest && selectedRequest.id === responseData.id) {
-              selectedRequest = responseData;
+              selectedRequest = {
+                ...selectedRequest, // Keep original selected request data including body
+                // Only update response-related fields
+                status: responseData.status,
+                responseHeaders: responseData.responseHeaders,
+                responseBody: responseData.responseBody,
+                responseLength: responseData.responseLength,
+                responseTime: responseData.responseTime,
+                error: responseData.error
+              };
             }
           }
         });
@@ -501,7 +538,9 @@
         if (hasUpdates) {
           requests = updatedRequests;
           // Update in project store
-          projectState.addRequests(responseBatch);
+          projectState.addRequests(updatedRequests.filter((_, index) => 
+            responseBatch.some(r => r.id === updatedRequests[index].id)
+          ));
         }
       });
       
