@@ -1,7 +1,7 @@
 {
 	"name": "kanti",
 	"productName": "kanti",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "A web appication tool for modifying http requests",
 	"main": ".vite/main/main.js",
 	"type": "module",
