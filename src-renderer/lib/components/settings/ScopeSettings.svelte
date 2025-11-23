@@ -255,24 +255,24 @@
   }
   
   .settings-card {
-    background-color: #2c2c2c;
-    border-radius: 4px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border: 1px solid #ddd;
+    box-shadow: 0 2px 10px var(--shadow-sm);
+    border: 1px solid var(--border-primary);
   }
   
   .settings-card-header {
-    background-color: #1a1a1a;
+    background-color: var(--bg-tertiary);
     padding: 15px 20px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-primary);
   }
   
   .settings-card-header h3 {
     margin: 0;
     font-size: 16px;
-    font-weight: normal;
-    color: #fff;
+    font-weight: 600;
+    color: var(--text-primary);
   }
   
   .settings-card-content {
@@ -280,7 +280,7 @@
   }
   
   .settings-description {
-    color: #aaa;
+    color: var(--text-secondary);
     margin-bottom: 15px;
     font-size: 14px;
   }
@@ -292,12 +292,18 @@
   }
   
   .settings-input {
-    background-color: #333;
-    border: 1px solid #444;
-    color: #fff;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-primary);
     padding: 8px 12px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 14px;
+    transition: border-color 0.2s ease;
+  }
+  
+  .settings-input:focus {
+    outline: none;
+    border-color: var(--input-focus);
   }
   
   .full-width {
@@ -305,18 +311,19 @@
   }
   
   .settings-button {
-    background-color: #333;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
     padding: 8px 15px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
   }
   
   .settings-button:hover {
-    background-color: #444;
+    background-color: var(--bg-hover);
+    border-color: var(--border-hover);
   }
   
   .scope-items {
@@ -331,11 +338,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #333;
+    background-color: var(--bg-tertiary);
     padding: 8px 12px;
-    border-radius: 4px;
-    color: #ddd;
+    border-radius: 6px;
+    color: var(--text-primary);
     font-size: 14px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .scope-item:hover {
+    background-color: var(--bg-hover);
   }
   
   .scope-item.exclusion {
@@ -345,18 +357,21 @@
   .remove-button {
     background: none;
     border: none;
-    color: #999;
+    color: var(--text-secondary);
     font-size: 18px;
     cursor: pointer;
     padding: 0 5px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
   }
   
   .remove-button:hover {
     color: #f44336;
+    background-color: var(--bg-hover);
   }
   
   .empty-message {
-    color: #777;
+    color: var(--text-secondary);
     font-style: italic;
     text-align: center;
     padding: 15px 0;

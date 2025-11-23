@@ -87,24 +87,24 @@
   }
   
   .settings-card {
-    background-color: #2c2c2c;
-    border-radius: 4px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border: 1px solid #ddd;
+    box-shadow: 0 2px 10px var(--shadow-sm);
+    border: 1px solid var(--border-primary);
   }
   
   .settings-card-header {
-    background-color: #1a1a1a;
+    background-color: var(--bg-tertiary);
     padding: 15px 20px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-primary);
   }
   
   .settings-card-header h3 {
     margin: 0;
     font-size: 16px;
-    font-weight: normal;
-    color: #fff;
+    font-weight: 600;
+    color: var(--text-primary);
   }
   
   .settings-card-content {
@@ -121,7 +121,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    color: #ddd;
+    color: var(--text-primary);
     font-size: 14px;
   }
   
@@ -132,12 +132,18 @@
   }
   
   .settings-input {
-    background-color: #333;
-    border: 1px solid #444;
-    color: #fff;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-primary);
     padding: 8px 12px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 14px;
     width: 100px;
+    transition: border-color 0.2s ease;
+  }
+  
+  .settings-input:focus {
+    outline: none;
+    border-color: var(--input-focus);
   }
 </style>

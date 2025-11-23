@@ -198,7 +198,13 @@ func (ps *ProxyServer) setupHandlers() {
 // captureRequest captures request details
 func (ps *ProxyServer) captureRequest(req *http.Request, reqID int64, startTime time.Time) models.RequestDetails {
 	protocol := "http"
-	if req.TLS != nil {
+
+	// Check if this was originally an HTTPS request by looking at the URL scheme
+	// In MITM proxy scenarios, the request URL scheme might indicate the original protocol
+	if req.URL != nil && req.URL.Scheme == "https" {
+		protocol = "https"
+	} else if req.TLS != nil {
+		// Fallback to TLS check for direct HTTPS requests
 		protocol = "https"
 	}
 
@@ -231,7 +237,13 @@ func (ps *ProxyServer) captureResponse(req *http.Request, resp *http.Response, r
 	responseTime := time.Since(startTime).Milliseconds()
 
 	protocol := "http"
-	if req.TLS != nil {
+
+	// Check if this was originally an HTTPS request by looking at the URL scheme
+	// In MITM proxy scenarios, the request URL scheme might indicate the original protocol
+	if req.URL != nil && req.URL.Scheme == "https" {
+		protocol = "https"
+	} else if req.TLS != nil {
+		// Fallback to TLS check for direct HTTPS requests
 		protocol = "https"
 	}
 

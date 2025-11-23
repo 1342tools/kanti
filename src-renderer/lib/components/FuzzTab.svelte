@@ -677,17 +677,17 @@ function runFFuf() {
   
   .tab-buttons {
     display: flex;
-    background-color: #1a1a1a;
+    background-color: var(--bg-secondary);
     padding: 7px 10px;
     border-radius: 4px;
     margin-bottom: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid #ddd;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-primary);
   }
   .tab-button {
     padding: 5px 20px;
     cursor: pointer;
-    color: #999;
+    color: var(--text-secondary);
     text-align: center;
     border-radius: 6px;
     transition: background-color 0.2s ease;
@@ -695,23 +695,22 @@ function runFFuf() {
   }
   
   .tab-button:hover {
-    background-color: #2a2a2a;
+    background-color: var(--bg-hover);
   }
   
   .tab-button.active {
-    
+    background-color: var(--accent-primary);
     color: white;
-    border: 1px solid #ff5252;
+    border: 1px solid var(--accent-primary);
   }
   
   .tab-content {
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-primary);
     display: none;
     padding: 15px;
-    background-color: #1a1a1a;
+    background-color: var(--bg-secondary);
     border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-
+    box-shadow: var(--shadow-sm);
   }
   
   .tab-content.active {
@@ -734,9 +733,11 @@ function runFFuf() {
   select {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-primary);
     border-radius: 4px;
     font-size: 14px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
   }
   
   textarea {
@@ -779,30 +780,29 @@ function runFFuf() {
   }
   
   .add-btn {
-    background-color: #1a1a1a;
-    color: white;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
     margin-top: 5px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-primary);
   }
   
   .add-btn:hover{
-    background-color: #ff5252;
+    background-color: var(--accent-primary);
     color: white;
     margin-top: 5px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--accent-primary);
   }
   
   .remove-btn {
-    background-color: #1a1a1a;
-    color: white;
-    border: 1px solid #ddd;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
   }
   
-  .add-btn:hover{
-    background-color: #ff5252;
+  .remove-btn:hover{
+    background-color: var(--accent-primary);
     color: white;
-    margin-top: 5px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--accent-primary);
   }
 
   .control-buttons {
@@ -822,42 +822,35 @@ function runFFuf() {
     font-weight: bold;
     cursor: pointer;
     flex: 1;
-    background-color: #1a1a1a;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid #ddd;
+    background-color: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
   }
   
-  .run-btn {
-
+  .run-btn:hover,
+  .stop-btn:hover,
+  .reset-btn:hover {
+    background-color: var(--accent-primary);
     color: white;
-  }
-  
-  .stop-btn {
-
-    color: white;
-  }
-  
-  .reset-btn {
-
-    color: white;
+    border: 1px solid var(--accent-primary);
   }
   
   button:disabled {
-    color: #999;
+    color: var(--text-muted);
     cursor: not-allowed;
   }
   
   .output-container {
     margin-top: 20px;
-    background-color: #1a1a1a;
-
+    background-color: var(--bg-secondary);
     border-radius: 4px;
-
+    border: 1px solid var(--border-primary);
   }
   
   .output {
-    background-color: #000;
-    color: #fff;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     padding: 15px;
     border-radius: 4px;
     overflow-x: auto;
@@ -865,6 +858,5 @@ function runFFuf() {
     height: 234px;
     overflow-y: auto;
     font-family: monospace;
-    border: 1px solid #ddd;
   }
 </style>

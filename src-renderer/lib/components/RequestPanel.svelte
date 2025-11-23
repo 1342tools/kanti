@@ -144,24 +144,24 @@
     flex-direction: column;
     height: 100%;
     overflow: hidden;
-    background-color: #1a1a1a;
+    background-color: var(--bg-primary);
   }
 
   .request-panel {
-    border-right: 1px solid #333;
+    border-right: 1px solid var(--border-primary);
   }
 
   .panel-header {
     padding: 10px 15px;
-    background-color: #1a1a1a;
-    border-bottom: 1px solid #333;
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-primary);
   }
 
   .panel-header h3 {
     margin: 0;
     font-size: 14px;
     font-weight: normal;
-    color: #ddd;
+    color: var(--text-primary);
   }
 
   .panel-content {

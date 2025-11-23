@@ -588,34 +588,68 @@
     
     // Set up listeners for proxy events
     if (isElectron && window.electronAPI) {
-      // Listen for new requests
-      window.electronAPI.receive('proxy-request', (requestData: CapturedRequest) => {
-        console.log('New request:', requestData);
-        // Add to requests list (ensure no duplicates)
-        const existingIndex = requests.findIndex(r => r.id === requestData.id);
-        if (existingIndex === -1) {
-          requests = [requestData, ...requests];
+      // Listen for new request batches (more efficient than individual requests)
+      window.electronAPI.receive('proxy-request-batch', (requestBatch: CapturedRequest[]) => {
+        console.log(`New request batch: ${requestBatch.length} requests`);
+        // Filter out duplicates and add new requests
+        const newRequests = requestBatch.filter(
+          requestData => !requests.some(r => r.id === requestData.id)
+        );
+        if (newRequests.length > 0) {
+          requests = [...newRequests, ...requests];
           // Add to sitemap
-          addRequestToSitemap(requestData);
+          newRequests.forEach(request => addRequestToSitemap(request));
         }
       });
       
-      // Listen for response updates
-      window.electronAPI.receive('proxy-response', (responseData: CapturedRequest) => {
-        console.log('Response received:', responseData);
-        // Update the request in our list
-        const index = requests.findIndex(r => r.id === responseData.id);
-        if (index !== -1) {
-          requests[index] = responseData;
-          requests = [...requests]; // Trigger reactivity
-          
-          // Update in sitemap
-          updateRequestInSitemap(responseData);
-          
-          // Update selected request if it's the one that was updated
-          if (selectedRequest && selectedRequest.id === responseData.id) {
-            selectedRequest = responseData;
+      // Listen for response batch updates (more efficient than individual responses)
+      window.electronAPI.receive('proxy-response-batch', (responseBatch: CapturedRequest[]) => {
+        console.log(`Response batch: ${responseBatch.length} responses`);
+        
+        // Update requests in bulk for better performance
+        const updatedRequests = [...requests];
+        let hasUpdates = false;
+        
+        responseBatch.forEach(responseData => {
+          const index = updatedRequests.findIndex(r => r.id === responseData.id);
+          if (index !== -1) {
+            const oldRequest = updatedRequests[index];
+            
+            // Preserve the original request body and only update response-related fields
+            updatedRequests[index] = {
+              ...oldRequest, // Keep original request data including body
+              // Only update response-related fields
+              status: responseData.status,
+              responseHeaders: responseData.responseHeaders,
+              responseBody: responseData.responseBody,
+              responseLength: responseData.responseLength,
+              responseTime: responseData.responseTime,
+              error: responseData.error
+            };
+            
+            hasUpdates = true;
+            
+            // Update in sitemap
+            updateRequestInSitemap(updatedRequests[index]);
+            
+            // Update selected request if it matches (preserving request body)
+            if (selectedRequest && selectedRequest.id === responseData.id) {
+              selectedRequest = {
+                ...selectedRequest, // Keep original selected request data including body
+                // Only update response-related fields
+                status: responseData.status,
+                responseHeaders: responseData.responseHeaders,
+                responseBody: responseData.responseBody,
+                responseLength: responseData.responseLength,
+                responseTime: responseData.responseTime,
+                error: responseData.error
+              };
+            }
           }
+        });
+        
+        if (hasUpdates) {
+          requests = updatedRequests;
         }
       });
       
@@ -1029,10 +1063,10 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    background-color: #1a1a1a;
+    background-color: var(--bg-primary);
     border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid #ddd;
+    box-shadow: 0 4px 8px var(--shadow-md);
+    border: 1px solid var(--border-primary);
     overflow: auto;
   }
 
@@ -1040,18 +1074,18 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    background-color: #1a1a1a;
+    background-color: var(--bg-primary);
     border-radius: 4px;
     overflow: auto;
   }
   
   .sitemap-header {
     padding: 11px 15px;
-    background-color: #1a1a1a;
+    background-color: var(--bg-secondary);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-primary);
     margin-bottom: 10px;
     border-radius: 4px;
   }
@@ -1059,7 +1093,7 @@
   .sitemap-header h3 {
     margin: 0;
     font-size: 16px;
-    color: #ddd;
+    color: var(--text-primary);
   }
   
   .sitemap-controls {
@@ -1087,11 +1121,11 @@
   }
   
   .node-header:hover {
-    background-color: #2a2a2a;
+    background-color: var(--bg-hover);
   }
   
   .sitemap-node.selected > .node-header {
-    background-color: #303030;
+    background-color: var(--bg-active);
   }
   
   .toggle-icon {
@@ -1101,7 +1135,7 @@
     align-items: center;
     justify-content: center;
     font-size: 10px;
-    color: #aaa;
+    color: var(--text-secondary);
     margin-right: 5px;
   }
   
@@ -1119,7 +1153,7 @@
   
   .request-count {
     font-size: 12px;
-    color: #aaa;
+    color: var(--text-secondary);
     margin-left: 5px;
   }
   
@@ -1129,27 +1163,27 @@
   
   /* Node type styling */
   .sitemap-node.domain > .node-header .node-name {
-    color: #4caf50;
+    color: var(--accent-primary);
     font-weight: bold;
   }
   
   .sitemap-node.subdomain > .node-header .node-name {
-    color: #2196f3;
+    color: var(--accent-hover);
   }
   
   .sitemap-node.path > .node-header .node-name {
-    color: #ddd;
+    color: var(--text-primary);
   }
   
   .sitemap-node.parameterized > .node-header .node-name {
-    color: #ff9800;
+    color: var(--accent-light);
     font-style: italic;
   }
   
   .empty-sitemap {
     padding: 20px;
     text-align: center;
-    color: #888;
+    color: var(--text-muted);
     font-style: italic;
   }
   
@@ -1166,43 +1200,44 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background-color: #777;
+    background-color: var(--text-muted);
   }
   
   .status-indicator.running .status-dot {
-    background-color: #4caf50;
-    box-shadow: 0 0 8px #4caf50;
+    background-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--accent-primary);
   }
   
   .control-button {
     padding: 5px 10px;
-    background-color: #333;
+    background-color: var(--bg-tertiary);
     border: none;
     border-radius: 4px;
-    color: #fff;
+    color: var(--text-primary);
     cursor: pointer;
     transition: background-color 0.2s ease;
     font-size: 12px;
   }
   
   .control-button:hover {
-    background-color: #444;
+    background-color: var(--bg-hover);
   }
   
   .scope-button {
-    background-color: #2196f3;
+    background-color: var(--accent-hover);
   }
   
   .scope-button:hover {
-    background-color: #1976d2;
+    background-color: var(--accent-primary);
   }
   
   /* Request Info Panel */
   .request-info-panel {
     height: 100%;
-    background-color: #1a1a1a;
+    background-color: var(--bg-secondary);
     border-radius: 7px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-primary);
     overflow: hidden;
   }
   
@@ -1218,7 +1253,7 @@
   .info-label {
     width: 80px;
     font-weight: bold;
-    color: #aaa;
+    color: var(--text-secondary);
   }
   
   .info-value {
@@ -1234,7 +1269,7 @@
   
   .action-button {
     padding: 8px 15px;
-    background-color: #2196f3;
+    background-color: var(--accent-primary);
     border: none;
     border-radius: 4px;
     color: white;
@@ -1242,7 +1277,7 @@
   }
   
   .action-button:hover {
-    background-color: #1976d2;
+    background-color: var(--accent-hover);
   }
   
   /* Method styling */
@@ -1294,7 +1329,7 @@
   }
   
   .no-response {
-    color: #888;
+    color: var(--text-muted);
     font-style: italic;
   }
   
@@ -1303,23 +1338,24 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    background-color: #1a1a1a;
+    background-color: var(--bg-secondary);
     border-radius: 7px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-primary);
     overflow: hidden;
   }
   
   .panel-header {
     padding: 10px 15px;
-    background-color: #1a1a1a;
-    border-bottom: 1px solid #333;
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-primary);
   }
   
   .panel-header h3 {
     margin: 0;
     font-size: 14px;
     font-weight: normal;
-    color: #ddd;
+    color: var(--text-primary);
   }
   
   .panel-content {
@@ -1379,7 +1415,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #777;
+    color: var(--text-muted);
     font-style: italic;
     padding: 20px;
   }
@@ -1393,7 +1429,7 @@
   .requests-table-container h4 {
     margin-top: 0;
     margin-bottom: 10px;
-    color: #ddd;
+    color: var(--text-primary);
     font-size: 14px;
   }
   
@@ -1406,37 +1442,37 @@
   .requests-table th {
     text-align: left;
     padding: 8px;
-    background-color: #252525;
-    color: #ddd;
-    border-bottom: 1px solid #333;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-primary);
   }
   
   .requests-table td {
     padding: 6px 8px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-primary);
   }
   
   .requests-table tr:hover {
-    background-color: #252525;
+    background-color: var(--bg-hover);
   }
   
   .requests-table tr.selected {
-    background-color: #303030;
+    background-color: var(--bg-active);
   }
   
   .small-button {
     padding: 3px 6px;
-    background-color: #333;
+    background-color: var(--bg-tertiary);
     border: none;
     border-radius: 3px;
-    color: #ddd;
+    color: var(--text-primary);
     cursor: pointer;
     font-size: 11px;
     margin-right: 4px;
   }
   
   .small-button:hover {
-    background-color: #444;
+    background-color: var(--bg-hover);
   }
   
   /* Modal */

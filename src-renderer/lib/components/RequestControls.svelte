@@ -84,14 +84,14 @@
 <style>
   .request-controls {
     padding: 8px 15px;
-    background-color: #1a1a1a;
+    background-color: var(--bg-primary);
     border-radius: 4px;
     margin-bottom: 10px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid #ddd;
+    box-shadow: 0 4px 8px var(--shadow-md);
+    border: 1px solid var(--border-primary);
   }
 
   .control-group {
@@ -108,18 +108,19 @@
     max-width: 300px;
     white-space: nowrap;
     text-overflow: ellipsis;
+    color: var(--text-primary);
   }
   
   .status-dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background-color: #777;
+    background-color: var(--text-muted);
   }
   
   .status-indicator.running .status-dot {
-    background-color: #4caf50;
-    box-shadow: 0 0 8px #4caf50;
+    background-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--accent-primary);
   }
   
   .control-buttons {
@@ -133,21 +134,22 @@
   
   .control-button {
     padding: 4px 14px;
-    background-color: #333;
+    background-color: var(--bg-secondary);
     border: none;
     border-radius: 4px;
-    color: #fff;
+    color: var(--text-primary);
     cursor: pointer;
     transition: background-color 0.2s ease;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-primary);
   }
   
   .control-button:hover {
-    background-color: #444;
+    background-color: var(--bg-hover);
   }
   
   .control-button.active {
-    background-color: #2196f3;
+    background-color: var(--accent-primary);
+    color: white;
   }
   
   .dropdown-content {
@@ -164,11 +166,16 @@
   .search-input, .status-input {
     width: 100%;
     padding: 6px 8px;
-    background-color: #333;
-    border: 1px solid #444;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
     border-radius: 4px;
-    color: #fff;
+    color: var(--text-primary);
     margin-bottom: 4px;
+  }
+  
+  .search-input:focus, .status-input:focus {
+    border-color: var(--input-focus);
+    outline: none;
   }
   
   .regex-option {
@@ -177,6 +184,6 @@
     gap: 8px;
     margin-top: 4px;
     font-size: 12px;
-    color: #ddd;
+    color: var(--text-secondary);
   }
 </style>

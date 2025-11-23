@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import RepeaterTab from '$lib/components/RepeaterTab2.svelte';
+  import RepeaterTab from '$lib/components/RepeaterTab.svelte';
   
   // Check if running in Electron
   const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;

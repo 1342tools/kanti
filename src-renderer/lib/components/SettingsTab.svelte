@@ -80,42 +80,45 @@
   
   .settings-sidebar {
     width: 200px;
-    background-color: #1a1a1a;
+    background-color: var(--bg-secondary);
     padding: 15px 0;
-    border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px var(--shadow-md);
     overflow: hidden;
+    border: 1px solid var(--border-primary);
   }
   
   .sidebar-item {
     padding: 12px 20px;
     cursor: pointer;
-    color: #ddd;
+    color: var(--text-primary);
     transition: all 0.2s ease;
     margin: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
+    border-radius: 6px;
+    border: 1px solid var(--border-primary);
+    font-weight: 500;
   }
   
   .sidebar-item:hover {
-    background-color: #2a2a2a;
-    color: #fff;
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
   }
   
   .sidebar-item.active {
-    background-color: #2a2a2a;
-    color: #fff;
-    border: 3px solid #ff5252;
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+    border: 2px solid var(--accent-primary);
+    font-weight: 600;
   }
   
   .settings-content {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
-    background-color: #1a1a1a;
-    border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid #ddd;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px var(--shadow-md);
+    border: 1px solid var(--border-primary);
   }
   
   .settings-section {
@@ -124,60 +127,74 @@
   
   .settings-section h2 {
     margin-top: 0;
-    color: #fff;
+    color: var(--text-primary);
     margin-bottom: 20px;
     padding-bottom: 10px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-primary);
+    font-size: 24px;
+    font-weight: 600;
   }
 
   /* Global styles for input elements within settings */
   :global(.settings-container input[type="text"]),
   :global(.settings-container input[type="number"]),
   :global(.settings-container select) {
-    background-color: #2a2a2a;
-    border: 1px solid #444;
-    border-radius: 4px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
     padding: 8px 12px;
-    color: #fff;
+    color: var(--text-primary);
     width: 100%;
     margin-bottom: 15px;
-    border: 1px solid #ddd;
+    transition: border-color 0.2s ease;
+  }
+
+  :global(.settings-container input[type="text"]:focus),
+  :global(.settings-container input[type="number"]:focus),
+  :global(.settings-container select:focus) {
+    outline: none;
+    border-color: var(--input-focus);
   }
 
   :global(.settings-container button) {
-    background-color: #333;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
     padding: 8px 15px;
     cursor: pointer;
-    transition: background-color 0.2s ease;
-    border: 1px solid #ddd;
+    transition: all 0.2s ease;
+    font-weight: 500;
   }
 
   :global(.settings-container button:hover) {
-    background-color: #444;
+    background-color: var(--bg-hover);
+    border-color: var(--border-hover);
   }
 
   :global(.settings-container button.primary) {
-    background-color: #ff5252;
+    background-color: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
   }
 
   :global(.settings-container button.primary:hover) {
-    background-color: #ff3838;
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
   }
 
   :global(.settings-container .form-group) {
     margin-bottom: 20px;
-    background-color: #2a2a2a;
+    background-color: var(--bg-tertiary);
     padding: 15px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
+    border-radius: 8px;
+    border: 1px solid var(--border-primary);
   }
 
   :global(.settings-container .form-group label) {
     display: block;
     margin-bottom: 8px;
-    color: #ddd;
+    color: var(--text-primary);
+    font-weight: 500;
   }
 </style>

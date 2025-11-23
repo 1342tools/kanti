@@ -29,12 +29,65 @@ export interface ApiKeyStore {
 }
 
 // Theme type
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark' | 'system' | 'custom';
+
+// Custom Theme interface
+export interface CustomTheme {
+  id: string;
+  name: string;
+  colors: {
+    // Background colors
+    bgPrimary: string;
+    bgSecondary: string;
+    bgTertiary: string;
+    bgHover: string;
+    bgActive: string;
+    
+    // Text colors
+    textPrimary: string;
+    textSecondary: string;
+    textTertiary: string;
+    textMuted: string;
+    
+    // Border colors
+    borderPrimary: string;
+    borderSecondary: string;
+    borderHover: string;
+    
+    // Accent colors
+    accentPrimary: string;
+    accentHover: string;
+    accentLight: string;
+    
+    // Shadow colors
+    shadowSm: string;
+    shadowMd: string;
+    shadowLg: string;
+    
+    // Scrollbar colors
+    scrollbarTrack: string;
+    scrollbarThumb: string;
+    scrollbarThumbHover: string;
+    
+    // Input colors
+    inputBg: string;
+    inputBorder: string;
+    inputFocus: string;
+    
+    // Titlebar colors
+    titlebarBg: string;
+    titlebarText: string;
+  };
+  createdAt: number;
+  updatedAt: number;
+}
 
 // Visual Settings interface
 export interface VisualSettings {
   hideTopTabs: boolean;
   theme: Theme;
+  customThemeId?: string;
+  customThemes: CustomTheme[];
 }
 
 // Default model configurations for each provider
@@ -77,7 +130,8 @@ export const modelConfigs = writable<ProviderModelConfigs>(defaultModelConfigs);
 export const currentModel = writable<string>(defaultModelConfigs.openai.defaultModel);
 export const visualSettings = writable<VisualSettings>({ 
   hideTopTabs: false,
-  theme: 'system'
+  theme: 'system',
+  customThemes: []
 });
 
 // Load from localStorage if in browser

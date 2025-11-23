@@ -5,7 +5,7 @@
   import { scopeStore } from '$lib/stores/scope';
   import { visualSettings } from '$lib/stores/settings';
   import RequestsTab from '$lib/components/RequestsTab.svelte';
-  import RepeaterTab from '$lib/components/RepeaterTab2.svelte';
+  import RepeaterTab from '$lib/components/RepeaterTab.svelte';
   import SettingsTab from '$lib/components/SettingsTab.svelte';
   import DecodeEncodeTab from '$lib/components/DecodeEncodeTab.svelte';
   import FuzzTab from '$lib/components/FuzzTab.svelte';

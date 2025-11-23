@@ -218,15 +218,15 @@
   h3 {
     margin-top: 0;
     margin-bottom: 15px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 18px;
   }
   
   .project-info {
-    background-color: #222;
-    border-radius: 4px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
     padding: 15px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-primary);
   }
   
   .info-row {
@@ -240,12 +240,12 @@
   
   .label {
     width: 100px;
-    color: #aaa;
+    color: var(--text-secondary);
   }
   
   .value {
     flex: 1;
-    color: #fff;
+    color: var(--text-primary);
     word-break: break-all;
   }
   
@@ -259,16 +259,18 @@
   .edit-btn {
     background: none;
     border: none;
-    color: #aaa;
+    color: var(--text-secondary);
     cursor: pointer;
     font-size: 14px;
     padding: 2px 6px;
     margin-left: 8px;
-    transition: color 0.2s;
+    border-radius: 4px;
+    transition: all 0.2s ease;
   }
   
   .edit-btn:hover {
-    color: #fff;
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
   }
   
   .edit-name-container {
@@ -279,36 +281,37 @@
   
   .name-input {
     flex: 1;
-    background-color: #333;
-    border: 1px solid #555;
-    border-radius: 4px;
-    color: #fff;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    color: var(--text-primary);
     padding: 6px 10px;
     font-size: 14px;
+    transition: border-color 0.2s ease;
   }
   
   .name-input:focus {
     outline: none;
-    border-color: #7289da;
+    border-color: var(--input-focus);
   }
   
   .save-name-btn {
-    background-color: #4c6ef5;
+    background-color: var(--accent-primary);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 6px 12px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s ease;
   }
   
   .save-name-btn:hover {
-    background-color: #3b5bdb;
+    background-color: var(--accent-hover);
   }
   
   .no-project {
-    color: #aaa;
+    color: var(--text-secondary);
     font-style: italic;
     text-align: center;
     margin: 10px 0;
@@ -326,20 +329,22 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: #333;
+    background-color: var(--bg-secondary);
     border: none;
-    color: #fff;
+    color: var(--text-primary);
     padding: 15px;
-    border-radius: 4%;
-    border: 1px solid #ddd;
+    border-radius: 8px;
+    border: 1px solid var(--border-primary);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
     text-align: center;
     gap: 8px;
   }
   
   .action-button:hover {
-    background-color: #444;
+    background-color: var(--bg-hover);
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
   }
   
   .action-button.disabled {
@@ -348,7 +353,9 @@
   }
   
   .action-button.disabled:hover {
-    background-color: #333;
+    background-color: var(--bg-secondary);
+    border-color: var(--border-primary);
+    transform: none;
   }
   
   .icon {
@@ -356,14 +363,15 @@
   }
   
   .project-error {
-    background-color: rgba(255, 0, 0, 0.2);
-    color: #ff6b6b;
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
     padding: 10px;
     border-radius: 8px;
     margin-top: 15px;
     display: flex;
     align-items: center;
     gap: 8px;
+    border: 1px solid rgba(220, 53, 69, 0.2);
   }
   
   .error-icon {
@@ -374,7 +382,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #aaa;
+    color: var(--text-secondary);
     margin-top: 15px;
   }
   
@@ -382,7 +390,7 @@
     width: 18px;
     height: 18px;
     border: 2px solid transparent;
-    border-top-color: #fff;
+    border-top-color: var(--text-primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }

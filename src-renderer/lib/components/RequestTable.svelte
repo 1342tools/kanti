@@ -237,9 +237,9 @@
     min-height: 150px;
     width: 100%;
     height: 100%;
-    background-color: #1a1a1a;
+    background-color: var(--bg-primary);
     margin-bottom: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px var(--shadow-md);
   }
   
   .request-table {
@@ -249,14 +249,14 @@
   }
   
   .request-table th {
-    background-color: #1a1a1a;
+    background-color: var(--bg-primary);
     text-align: center;
-    color: #ddd;
+    color: var(--text-primary);
     height: 25px;
     position: sticky;
     top: 0;
     z-index: 1;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-primary);
     max-width: 300px;
     white-space: nowrap;
     overflow: hidden;
@@ -268,24 +268,24 @@
   }
   
   .request-table th:hover {
-    background-color: #2a2a2a;
+    background-color: var(--bg-hover);
   }
   
   .request-table th.sorted {
-    background-color: #2a2a2a;
+    background-color: var(--bg-hover);
     font-weight: bold;
   }
   
   .sort-indicator {
     margin-left: 5px;
-    color: #ff5252;
+    color: var(--accent-primary);
     font-size: 10px;
   }
   
   .sort-priority {
     display: inline-block;
     margin-left: 3px;
-    background-color: #ff5252;
+    background-color: var(--accent-primary);
     color: white;
     font-size: 9px;
     width: 14px;
@@ -297,8 +297,8 @@
   
   .request-table td {
     padding: 5px;
-    border-bottom: 1px solid #333;
-    color: #ddd;
+    border-bottom: 1px solid var(--border-primary);
+    color: var(--text-primary);
     text-align: center;
     max-width: 300px;
     white-space: nowrap;
@@ -307,15 +307,15 @@
   }
   
   .request-table tr:hover {
-    background-color: #2a2a2a;
+    background-color: var(--bg-hover);
   }
   
   .request-table tr.selected {
-    background-color: #303030;
+    background-color: var(--bg-active);
   }
   
   .request-table tr.error {
-    color: #ff5252;
+    color: var(--accent-primary);
   }
   
   .method {
@@ -324,23 +324,23 @@
   }
   
   .method.get {
-    color: #4caf50;
+    color: var(--accent-primary);
   }
   
   .method.post {
-    color: #2196f3;
+    color: var(--accent-primary);
   }
   
   .method.put {
-    color: #ff9800;
+    color: var(--accent-primary);
   }
   
   .method.delete {
-    color: #f44336;
+    color: var(--accent-primary);
   }
   
   .method.connect {
-    color: #9c27b0;
+    color: var(--accent-primary);
   }
   
   .path {
@@ -357,24 +357,24 @@
   }
   
   .status-2xx {
-    background-color: #4caf50;
-    color: #fff;
+    background-color: var(--accent-primary);
+    color: white;
   }
   
   .status-3xx {
-    background-color: #ff9800;
-    color: #fff;
+    background-color: var(--accent-primary);
+    color: white;
   }
   
   .status-4xx, .status-5xx {
-    background-color: #f44336;
-    color: #fff;
+    background-color: var(--accent-primary);
+    color: white;
   }
   
   .no-requests {
     text-align: center;
     padding: 30px;
-    color: #888;
+    color: var(--text-muted);
     font-style: italic;
   }
 </style>

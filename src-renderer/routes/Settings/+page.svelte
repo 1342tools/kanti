@@ -21,8 +21,8 @@
 
 <style>
   :global(body) {
-    background-color: #212121;
-    color: #fff;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     height: calc(100vh + 10px);
     margin: 0;
     padding: 0;
@@ -32,6 +32,7 @@
     height: 100%;
     width: 100%;
     padding: 10px;
+    background-color: var(--bg-primary);
   }
   
 </style>
