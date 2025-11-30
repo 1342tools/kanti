@@ -2,6 +2,9 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Forks][forks-shield]][forks-url]
 [![MIT License][license-shield]][license-url]
+[![Donate][donate-shield]][donate-url]
+[![Website][website-shield]][website-url]
+[![X/Twitter][x-shield]][x-url]
 
 <br />
 <div align="center">
@@ -9,7 +12,13 @@
     <img src="https://github.com/user-attachments/assets/4f8c807a-95e7-4a4a-be61-ff8f7a591313" alt="Logo" width="160" height="80">
   </a>
 
-  <h3 align="center">A web application testing tool built for capturing and modifying http/https requests.</h3>
+  <h3 align="center">Kanti</h3>
+
+  <p align="center">
+    A web application testing tool built for capturing and modifying http/https requests.
+    <br />
+    <a href="https://kanti.app/open-source-docs/"><strong>Explore the docs »</strong></a>
+ </p>
 
 </div>
 
@@ -26,6 +35,7 @@
 - **Repeater**: Manually craft and replay HTTP requests with real-time response analysis
 - **Decoder**: Encode/decode data using various schemes (URL, Base64, JWT, etc.)
 - **Sitemap**: Visualize collected subdomains and paths
+- **Themes**: Create custom themes or import themes made by the community
 
 ## Installation
 
@@ -65,11 +75,17 @@ npm run package
 
 Contact @kusonooyasumi on X
 
-[contributors-shield]: https://img.shields.io/github/contributors/1342Tools/kanti.svg?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/1342Tools/kanti.svg
 [contributors-url]: https://github.com/1342Tools/kanti/graphs/contributors
-[stars-shield]: https://img.shields.io/github/stars/1342Tools/kanti.svg?style=for-the-badge
+[stars-shield]: https://img.shields.io/github/stars/1342Tools/kanti.svg
 [stars-url]: https://github.com/1342Tools/kanti/stargazers
-[license-shield]: https://img.shields.io/github/license/1342Tools/kanti.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/1342Tools/kanti.svg
 [license-url]: https://github.com/1342Tools/kanti/blob/main/LICENSE
-[forks-shield]: https://img.shields.io/github/forks/1342Tools/kanti.svg?style=for-the-badge
+[forks-shield]: https://img.shields.io/github/forks/1342Tools/kanti.svg
 [forks-url]: https://github.com/1342Tools/kanti/network/members
+[donate-shield]: https://img.shields.io/badge/-Donate-black.svg?colorB=555
+[donate-url]: https://ko-fi.com/kusonooyasumi
+[x-shield]: https://img.shields.io/badge/-X/Twitter-black.svg?colorB=555
+[x-url]: https://x.com/kantidotapp
+[website-shield]: https://img.shields.io/badge/-Website-black.svg?colorB=555
+[website-url]: https://kanti.app
