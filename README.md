@@ -1,7 +1,23 @@
-# Kanti (formerly Kproxy)
+[![Contributors][contributors-shield]][contributors-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Forks][forks-shield]][forks-url]
+[![MIT License][license-shield]][license-url]
+
+<br />
+<div align="center">
+  <a href="https://github.com/othneildrew/Best-README-Template">
+    <img src="https://github.com/user-attachments/assets/4f8c807a-95e7-4a4a-be61-ff8f7a591313" alt="Logo" width="160" height="80">
+  </a>
+
+  <h3 align="center">A web application testing tool built for capturing and modifying http/https requests.</h3>
+
+</div>
+
+
+
+
 ![image](https://github.com/user-attachments/assets/022d9a59-1636-48ef-bc3e-a7596a8ddde8)
 
-A web application testing tool built for capturing and modifying http/https requests.
 
 ## Features
 
@@ -49,3 +65,11 @@ npm run package
 
 Contact @kusonooyasumi on X
 
+[contributors-shield]: https://img.shields.io/github/contributors/1342Tools/kanti.svg?style=for-the-badge
+[contributors-url]: https://github.com/1342Tools/kanti/graphs/contributors
+[stars-shield]: https://img.shields.io/github/stars/1342Tools/kanti.svg?style=for-the-badge
+[stars-url]: https://github.com/1342Tools/kanti/stargazers
+[license-shield]: https://img.shields.io/github/license/1342Tools/kanti.svg?style=for-the-badge
+[license-url]: https://github.com/1342Tools/kanti/blob/main/LICENSE
+[forks-shield]: https://img.shields.io/github/forks/1342Tools/kanti.svg?style=for-the-badge
+[forks-url]: https://github.com/1342Tools/kanti/network/members
