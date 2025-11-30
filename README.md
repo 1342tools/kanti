@@ -77,11 +77,11 @@ Contact @kusonooyasumi on X
 
 [contributors-shield]: https://img.shields.io/github/contributors/1342Tools/kanti.svg
 [contributors-url]: https://github.com/1342Tools/kanti/graphs/contributors
-[stars-shield]: https://img.shields.io/github/stars/1342Tools/kanti.svg
+[stars-shield]: https://img.shields.io/github/stars/1342Tools/kanti.svg?style=flat
 [stars-url]: https://github.com/1342Tools/kanti/stargazers
 [license-shield]: https://img.shields.io/github/license/1342Tools/kanti.svg
 [license-url]: https://github.com/1342Tools/kanti/blob/main/LICENSE
-[forks-shield]: https://img.shields.io/github/forks/1342Tools/kanti.svg
+[forks-shield]: https://img.shields.io/github/forks/1342Tools/kanti.svg?style=flat
 [forks-url]: https://github.com/1342Tools/kanti/network/members
 [donate-shield]: https://img.shields.io/badge/-Donate-black.svg?colorB=555
 [donate-url]: https://ko-fi.com/kusonooyasumi
